@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11pt; margin: 20px; color: #222; }
+  .header { text-align: center; border-bottom: 3px solid #1F3A6B; margin-bottom: 15px; padding-bottom: 8px; }
+  .header h1 { color: #1F3A6B; font-size: 16pt; margin: 0; }
+  .section { margin-bottom: 14px; }
+  .section h3 { background: #1F3A6B; color: white; padding: 4px 8px; font-size: 11pt; margin: 0 0 6px 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #2563EB; color: white; padding: 5px 8px; text-align: left; }
+  td { padding: 4px 8px; border-bottom: 1px solid #E2E8F0; }
+  .stat-box { display: inline-block; border: 1px solid #CBD5E1; padding: 8px 16px; margin: 4px; text-align: center; border-radius: 4px; }
+  .stat-box .num { font-size: 20pt; font-weight: bold; color: #1F3A6B; }
+  .stat-box .lbl { font-size: 9pt; color: #6B7280; }
+  .footer { margin-top: 20px; font-size: 9pt; color: #666; border-top: 1px solid #ccc; padding-top: 6px; }
+  .approved { background: #DCFCE7; padding: 8px; border: 1px solid #166534; text-align: center; font-weight: bold; color: #166534; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>IRERERO — Monthly ECD Centre Report</h1>
+  <p><strong>{{ centre_name }}</strong> | {{ month_name }} {{ year }} |
+     Status: <strong>{{ status }}</strong></p>
+</div>
+
+{% if status == 'submitted' %}
+<div class="approved">✓ Submitted to Sector Coordinator on {{ submitted_at }}</div>
+{% endif %}
+
+<div class="section">
+  <h3>Enrolment Summary</h3>
+  <div class="stat-box"><div class="num">{{ total_enrolled }}</div><div class="lbl">Total Enrolled</div></div>
+  <div class="stat-box"><div class="num">{{ total_enrolled_male }}</div><div class="lbl">Boys</div></div>
+  <div class="stat-box"><div class="num">{{ total_enrolled_female }}</div><div class="lbl">Girls</div></div>
+</div>
+
+<div class="section">
+  <h3>Nutritional Status Distribution</h3>
+  <table>
+    <tr><th>Classification</th><th>Number</th><th>Percentage</th></tr>
+    {% for row in status_rows %}
+    <tr><td>{{ row.label }}</td><td>{{ row.count }}</td><td>{{ row.percent }}%</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="section">
+  <h3>New Cases This Month</h3>
+  <div class="stat-box"><div class="num">{{ new_sam_cases }}</div><div class="lbl">New SAM Cases</div></div>
+  <div class="stat-box"><div class="num">{{ new_mam_cases }}</div><div class="lbl">New MAM Cases</div></div>
+  <div class="stat-box"><div class="num">{{ total_referrals }}</div><div class="lbl">Total Referrals</div></div>
+  <div class="stat-box"><div class="num">{{ children_in_nutrition }}</div><div class="lbl">In Nutrition Programme</div></div>
+</div>
+
+<div class="section">
+  <h3>Manager Notes</h3>
+  <p>{{ manager_notes|default:"No notes added." }}</p>
+</div>
+
+{% if approved_by %}
+<div class="section">
+  <h3>Approval</h3>
+  <p>Approved by: {{ approved_by }} on {{ approved_at }}</p>
+</div>
+{% endif %}
+
+<div class="footer">
+  Irerero Digital Platform — Computer &amp; Software Engineering, Rwanda — 2025<br>
+  Report generated automatically. Data reflects entries made in Irerero for {{ month_name }} {{ year }}.
+</div>
+</body>
+</html>

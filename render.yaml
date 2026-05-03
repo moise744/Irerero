@@ -1,0 +1,51 @@
+# Render Blueprint — deploy backend + dashboard
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: irerero-api
+    runtime: python
+    buildCommand: cd backend && pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+    startCommand: cd backend && daphne -b 0.0.0.0 -p $PORT irerero_backend.asgi:application
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DB_ENGINE
+        value: django.db.backends.postgresql
+      - key: DB_NAME
+        fromDatabase:
+          name: irerero-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: irerero-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: irerero-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: irerero-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: irerero-db
+          property: port
+
+  - type: web
+    name: irerero-dashboard
+    runtime: static
+    buildCommand: cd web-dashboard && npm install && npm run build
+    staticPublishPath: web-dashboard/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://irerero-api.onrender.com/api/v1
+
+databases:
+  - name: irerero-db
+    plan: free
+    databaseName: irerero_db
+    user: irerero

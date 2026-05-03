@@ -1,0 +1,323 @@
+# reports/views.py
+#
+# Dashboard data endpoints — all 5 levels.
+# Report generation, approval workflow, and export endpoints.
+# FR-061 to FR-075.
+
+from django.utils import timezone
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
+
+from auth_module.models import Role
+from auth_module.permissions import IsCentreManager
+from reports.models import MonthlyReport, ReportStatus
+from reports.serializers import MonthlyReportSerializer
+
+
+class CaregiverDashboardView(APIView):
+    """
+    GET /api/v1/reports/dashboards/caregiver/
+    Returns the 4 items required by FR-061:
+      (1) Today's attendance (present/absent count)
+      (2) Active alerts ordered by urgency
+      (3) Children due for measurement today or overdue (>30 days)
+      (4) Quick-action hint (buttons rendered client-side)
+    FR-061.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from alerts.models import Alert, AlertStatus
+        from attendance.models import Attendance, AttendanceStatus
+        from children.models import Child, ChildStatus
+        from measurements.models import Measurement
+
+        user    = request.user
+        centre  = user.centre_id
+        today   = timezone.now().date()
+        now     = timezone.now()
+
+        # Today's attendance — FR-061 item 1
+        att_today = Attendance.objects.filter(centre_id=centre) if hasattr(Attendance, 'centre_id') else Attendance.objects.filter(child__centre_id=centre, date=today)
+        present  = att_today.filter(status=AttendanceStatus.PRESENT).count()
+        absent   = att_today.filter(status=AttendanceStatus.ABSENT).count()
+
+        # Active alerts by urgency — FR-061 item 2
+        from alerts.serializers import AlertSerializer
+        active_alerts = Alert.objects.filter(
+            centre=centre, status=AlertStatus.ACTIVE
+        ).order_by("severity", "-generated_at")[:10]
+
+        # Children due for measurement today OR overdue >30 days — FR-061 item 3
+        all_children = Child.objects.filter(
+            centre_id=centre, status=ChildStatus.ACTIVE, deleted_at__isnull=True
+        )
+        due_or_overdue = []
+        for child in all_children:
+            last_m = Measurement.objects.filter(child=child).order_by("-recorded_at").first()
+            if not last_m:
+                due_or_overdue.append({"child_id": str(child.id), "name": child.full_name, "reason": "never_measured"})
+                continue
+            days_since = (now - last_m.recorded_at).days
+            if days_since >= 30:
+                due_or_overdue.append({
+                    "child_id":   str(child.id),
+                    "name":       child.full_name,
+                    "days_since": days_since,
+                    "reason":     "overdue" if days_since >= 60 else "due",
+                })
+        due_or_overdue.sort(key=lambda x: x.get("days_since", 999), reverse=True)
+
+        return Response({
+            "attendance": {"present": present, "absent": absent, "date": str(today)},
+            "active_alerts":    AlertSerializer(active_alerts, many=True).data,
+            "due_or_overdue":   due_or_overdue[:20],
+            "quick_actions":    ["take_attendance", "record_measurement", "view_alerts"],
+        })
+
+
+class CentreDashboardView(APIView):
+    """
+    GET /api/v1/reports/dashboards/centre/
+    FR-063, FR-064.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from children.models import Child, ChildStatus
+        from alerts.models import Alert, AlertStatus
+        from measurements.models import Measurement, NutritionalStatus
+
+        centre = request.user.centre_id
+        children = Child.objects.filter(centre_id=centre, status=ChildStatus.ACTIVE)
+        total = children.count()
+
+        # Status distribution for bar/pie chart — FR-064
+        status_dist = {}
+        for child in children:
+            last_m = Measurement.objects.filter(child=child).order_by("-recorded_at").first()
+            if last_m:
+                s = last_m.nutritional_status
+            else:
+                s = "unmeasured"
+            status_dist[s] = status_dist.get(s, 0) + 1
+
+        unresolved_alerts = Alert.objects.filter(
+            centre=centre, status=AlertStatus.ACTIVE
+        ).count()
+
+        # Ranked list by urgency — FR-063
+        from alerts.serializers import AlertSerializer
+        ranked = Alert.objects.filter(
+            centre=centre, status=AlertStatus.ACTIVE
+        ).order_by("severity", "-generated_at").select_related("child")[:10]
+
+        return Response({
+            "total_enrolled":   total,
+            "status_distribution": status_dist,
+            "unresolved_alerts": unresolved_alerts,
+            "ranked_urgent_children": AlertSerializer(ranked, many=True).data,
+        })
+
+
+class SectorDashboardView(APIView):
+    """
+    GET /api/v1/reports/dashboards/sector/
+    Comparative table of all centres in the sector — FR-065.
+    Shows: name, enrolment, SAM%, stunted%, avg attendance, unresolved alerts.
+    Sorted by urgency (most urgent first).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from children.models import Centre, Child, ChildStatus
+        from alerts.models import Alert, AlertStatus
+        from measurements.models import Measurement
+
+        sector_id = request.user.sector_id
+        centres   = Centre.objects.filter(sector_id=sector_id, is_active=True)
+
+        rows = []
+        for centre in centres:
+            children = Child.objects.filter(centre=centre, status=ChildStatus.ACTIVE)
+            total    = children.count()
+            sam_count    = 0
+            stunted_count = 0
+            for child in children:
+                last_m = Measurement.objects.filter(child=child).order_by("-recorded_at").first()
+                if last_m:
+                    if last_m.nutritional_status == "sam":
+                        sam_count += 1
+                    if last_m.nutritional_status in {"stunted", "severely_stunted"}:
+                        stunted_count += 1
+            unresolved = Alert.objects.filter(
+                centre=centre.id, status=AlertStatus.ACTIVE
+            ).count()
+            rows.append({
+                "centre_id":         str(centre.id),
+                "centre_name":       centre.centre_name,
+                "total_enrolled":    total,
+                "sam_percent":       round(sam_count / total * 100, 1) if total else 0,
+                "stunted_percent":   round(stunted_count / total * 100, 1) if total else 0,
+                "unresolved_alerts": unresolved,
+            })
+
+        # Sort by urgency: SAM% descending — FR-065
+        rows.sort(key=lambda x: x["sam_percent"], reverse=True)
+
+        return Response({"centres": rows, "total_centres": len(rows)})
+
+
+class DistrictNationalDashboardView(APIView):
+    """
+    GET /api/v1/reports/dashboards/district/
+    GET /api/v1/reports/dashboards/national/
+    Aggregate with filters — FR-066.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from children.models import Centre
+
+        user = request.user
+        if user.role == Role.DISTRICT:
+            centres = Centre.objects.filter(district_id=user.district_id, is_active=True)
+        else:
+            centres = Centre.objects.filter(is_active=True)
+
+        # High-level aggregates
+        total_centres  = centres.count()
+        total_children = sum(
+            c.children.filter(status="active").count() for c in centres
+        )
+
+        return Response({
+            "total_centres":  total_centres,
+            "total_children": total_children,
+            "filters_available": ["time_period", "age_group", "sex", "nutritional_status"],
+        })
+
+
+class MonthlyReportViewSet(ModelViewSet):
+    """
+    GET  /api/v1/reports/monthly/       — list draft/approved/submitted reports
+    POST /api/v1/reports/monthly/{id}/approve/ — manager approves and submits (FR-070, FR-071)
+    """
+    serializer_class   = MonthlyReportSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = MonthlyReport.objects.all()
+        user = self.request.user
+        if user.centre_id:
+            qs = qs.filter(centre=user.centre_id)
+        return qs.order_by("-year", "-month")
+
+    def approve(self, request, pk=None):
+        """
+        POST /api/v1/reports/monthly/{id}/approve/
+        Manager adds notes, approves, and electronically submits.
+        FR-070, FR-071.
+        """
+        report = self.get_object()
+        notes  = request.data.get("manager_notes", "")
+
+        report.status        = ReportStatus.SUBMITTED
+        report.manager_notes = notes
+        report.approved_by   = request.user.id
+        report.approved_at   = timezone.now()
+        report.submitted_at  = timezone.now()
+        report.save()
+
+        return Response(MonthlyReportSerializer(report).data)
+
+
+import csv
+import io
+from django.http import HttpResponse
+
+
+class ReportExportView(APIView):
+    """
+    GET /api/v1/reports/monthly/{id}.csv  — CSV export (FR-073)
+    GET /api/v1/reports/monthly/{id}.pdf  — PDF export (FR-073)
+    GET /api/v1/children/{id}/growth-report.pdf — individual child report (FR-072)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, format_type):
+        report = MonthlyReport.objects.filter(pk=pk).first()
+        if not report:
+            return Response({"detail": "Report not found."}, status=404)
+
+        if format_type == "csv":
+            return self._export_csv(report)
+        elif format_type == "pdf":
+            return self._export_pdf(report)
+        return Response({"detail": "Invalid format."}, status=400)
+
+    def _export_csv(self, report):
+        """Export monthly report as CSV — FR-073."""
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            f'attachment; filename="irerero_report_{report.year}_{report.month:02d}.csv"'
+        )
+        writer = csv.writer(response)
+        data   = report.data
+
+        writer.writerow(["Irerero Monthly Report", f"{report.year}-{report.month:02d}"])
+        writer.writerow([])
+        writer.writerow(["Metric", "Value"])
+        writer.writerow(["Total Enrolled", data.get("total_enrolled", 0)])
+        writer.writerow(["Enrolled Male", data.get("total_enrolled_male", 0)])
+        writer.writerow(["Enrolled Female", data.get("total_enrolled_female", 0)])
+        writer.writerow([])
+        writer.writerow(["Nutritional Status", "Count"])
+        for status, count in data.get("nutritional_status", {}).items():
+            writer.writerow([status.replace("_", " ").title(), count])
+        writer.writerow([])
+        writer.writerow(["New SAM Cases", data.get("new_sam_cases", 0)])
+        writer.writerow(["New MAM Cases", data.get("new_mam_cases", 0)])
+        writer.writerow(["Total Referrals", data.get("total_referrals", 0)])
+        writer.writerow(["Children in Nutrition Programme", data.get("children_in_nutrition", 0)])
+        return response
+
+    def _export_pdf(self, report):
+        """Export monthly report as PDF — FR-073."""
+        from pdf.generator import generate_monthly_report_pdf
+        from django.http import FileResponse
+        from pathlib import Path
+        from django.conf import settings
+
+        path = generate_monthly_report_pdf(report)
+        full_path = Path(settings.MEDIA_ROOT) / path
+        if full_path.exists():
+            if str(full_path).lower().endswith(".html"):
+                return FileResponse(open(full_path, "rb"), content_type="text/html; charset=utf-8")
+            return FileResponse(open(full_path, "rb"), content_type="application/pdf")
+        return Response({"detail": "PDF generation failed."}, status=500)
+
+
+class ChildGrowthReportPDFView(APIView):
+    """GET /api/v1/children/{id}/growth-report.pdf — FR-072"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        from children.models import Child
+        from pdf.generator import generate_child_growth_report
+        from django.http import FileResponse
+        from pathlib import Path
+        from django.conf import settings
+
+        child = Child.objects.filter(pk=pk).first()
+        if not child:
+            return Response({"detail": "Child not found."}, status=404)
+        path = generate_child_growth_report(child)
+        full_path = Path(settings.MEDIA_ROOT) / path
+        if full_path.exists():
+            if str(full_path).lower().endswith(".html"):
+                return FileResponse(open(full_path, "rb"), content_type="text/html; charset=utf-8")
+            return FileResponse(open(full_path, "rb"), content_type="application/pdf")
+        return Response({"detail": "Report generation failed."}, status=500)

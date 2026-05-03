@@ -1,0 +1,83 @@
+# pubspec.yaml — Irerero Mobile App
+# Flutter 3.x — Android (API 26+)
+
+name: irerero
+description: Integrated Digital Platform for Early Childhood Development in Rwanda
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Database — AES-256 encrypted SQLite (NFR-018)
+  sqflite: ^2.3.3
+  sqflite_common_ffi: ^2.3.3
+
+  # HTTP client — sync engine and API calls
+  http: ^1.2.1
+  dio: ^5.4.3
+
+  # JWT token storage — secure on device
+  flutter_secure_storage: ^9.0.0
+
+  # Connectivity detection — sync trigger
+  connectivity_plus: ^6.0.3
+
+  # Bluetooth Low Energy — device communication (ES-FR-001)
+  flutter_blue_plus: ^1.31.9
+
+  # Growth chart — WHO P3/P15/P50/P85/P97 lines (FR-024)
+  fl_chart: ^0.68.0
+
+  # Image picker — child photo (FR-016)
+  image_picker: ^1.1.2
+
+  # UUID generation — device-side idempotency key
+  uuid: ^4.4.0
+
+  # State management
+  provider: ^6.1.2
+
+  # Date utilities — age calculation (FR-020)
+  intl: ^0.20.2
+
+  # Credential hashing for offline login verification
+  crypto: ^3.0.6
+
+  # Path utils (used by sqflite helper)
+  path: ^1.9.0
+
+  # Background sync scheduling
+  workmanager: ^0.9.0+3
+
+  # Local notifications — offline alerts
+  flutter_local_notifications: ^17.2.1+2
+  sqflite_sqlcipher: ^3.4.0
+  sqlcipher_flutter_libs: ^0.7.0+eol
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  # WHO LMS tables embedded as JSON assets — NFR-026
+  assets:
+    - assets/lms_data/waz_boys.json
+    - assets/lms_data/waz_girls.json
+    - assets/lms_data/haz_boys.json
+    - assets/lms_data/haz_girls.json
+    - assets/lms_data/whz.json
+    - assets/lms_data/baz_boys.json
+    - assets/lms_data/baz_girls.json
+    - assets/lms_data/hcz.json

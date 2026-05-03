@@ -1,0 +1,24 @@
+# docker-compose.yml
+# Starts PostgreSQL and Redis for local development.
+# Run: docker-compose up -d
+
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:       irerero_db
+      POSTGRES_USER:     irerero
+      POSTGRES_PASSWORD: irerero2025
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,91 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Irerero — .gitignore
+# Covers: Python/Django backend, Node.js/React dashboard, Flutter mobile app
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Python / Django ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# Virtual environments
+backend/venv/
+venv/
+.venv/
+env/
+
+# Django
+backend/db.sqlite3
+backend/staticfiles/
+backend/media/uploads/
+backend/celerybeat-schedule
+backend/celerybeat-schedule-shm
+backend/celerybeat-schedule-wal
+backend/_irerero_run_server.ps1
+
+# Environment variables
+.env
+.env.local
+.env.production
+!backend/.env.example
+
+# ── Node.js / React Dashboard ────────────────────────────────────────────────
+node_modules/
+web-dashboard/node_modules/
+web-dashboard/dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ── Flutter / Dart (mobile-app) ──────────────────────────────────────────────
+mobile-app/.dart_tool/
+mobile-app/.flutter-plugins
+mobile-app/.flutter-plugins-dependencies
+mobile-app/build/
+mobile-app/.packages
+mobile-app/.pub-cache/
+mobile-app/.pub/
+mobile-app/android/.gradle/
+mobile-app/android/local.properties
+mobile-app/android/app/debug/
+mobile-app/android/app/profile/
+mobile-app/android/app/release/
+*.apk
+*.aab
+
+# ── IDE / Editor ─────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# ── OS Files ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+*.bak
+*.tmp
+*.temp
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/

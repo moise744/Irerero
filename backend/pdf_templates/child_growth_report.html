@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11pt; margin: 20px; color: #222; }
+  .header { text-align: center; border-bottom: 3px solid #1F3A6B; margin-bottom: 15px; padding-bottom: 8px; }
+  .header h1 { color: #1F3A6B; font-size: 16pt; margin: 0; }
+  .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-weight: bold; }
+  .status-normal { background: #DCFCE7; color: #166534; }
+  .status-at_risk, .status-mam, .status-stunted, .status-underweight { background: #FEF9C3; color: #9A3412; }
+  .status-sam, .status-severely_stunted { background: #FEE2E2; color: #991B1B; }
+  .section { margin-bottom: 14px; }
+  .section h3 { background: #1F3A6B; color: white; padding: 4px 8px; font-size: 11pt; margin: 0 0 6px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  th { background: #2563EB; color: white; padding: 4px 6px; text-align: left; }
+  td { padding: 3px 6px; border-bottom: 1px solid #E2E8F0; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .footer { margin-top: 20px; font-size: 9pt; color: #666; border-top: 1px solid #ccc; padding-top: 6px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>IRERERO — Individual Child Growth Report</h1>
+  <p>{{ centre_name }} | Generated: {{ generated_date }}</p>
+</div>
+
+<div class="section">
+  <h3>Child Profile</h3>
+  <table>
+    <tr><td><strong>Name:</strong> {{ child_name }}</td>
+        <td><strong>Irerero ID:</strong> {{ irerero_id }}</td></tr>
+    <tr><td><strong>Date of Birth:</strong> {{ date_of_birth }}</td>
+        <td><strong>Age:</strong> {{ age_months }} months</td></tr>
+    <tr><td><strong>Sex:</strong> {{ sex }}</td>
+        <td><strong>Current Status:</strong>
+          <span class="status-badge status-{{ current_status }}">{{ current_status_label }}</span>
+        </td></tr>
+    <tr><td><strong>Guardian:</strong> {{ guardian_name }}</td>
+        <td><strong>Phone:</strong> {{ guardian_phone }}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Measurement History</h3>
+  <table>
+    <tr>
+      <th>Date</th><th>Weight (kg)</th><th>Height (cm)</th>
+      <th>MUAC (cm)</th><th>Temp (°C)</th><th>Status</th><th>Source</th>
+    </tr>
+    {% for m in measurements %}
+    <tr>
+      <td>{{ m.date }}</td>
+      <td>{{ m.weight_kg }}</td>
+      <td>{{ m.height_cm }}</td>
+      <td>{{ m.muac_cm }}</td>
+      <td>{{ m.temperature_c }}</td>
+      <td>{{ m.status }}</td>
+      <td>{{ m.source }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7" style="text-align:center;">No measurements recorded yet.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="section">
+  <h3>Active Alerts</h3>
+  <table>
+    <tr><th>Date</th><th>Alert</th><th>Urgency</th><th>Status</th></tr>
+    {% for a in alerts %}
+    <tr>
+      <td>{{ a.date }}</td>
+      <td>{{ a.explanation }}</td>
+      <td>{{ a.severity }}</td>
+      <td>{{ a.status }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" style="text-align:center;">No alerts recorded.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="section">
+  <h3>Referrals</h3>
+  <table>
+    <tr><th>Date</th><th>Reason</th><th>Health Centre</th><th>Status</th><th>Outcome</th></tr>
+    {% for r in referrals %}
+    <tr>
+      <td>{{ r.date }}</td><td>{{ r.reason }}</td>
+      <td>{{ r.health_centre }}</td><td>{{ r.status }}</td>
+      <td>{{ r.outcome }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" style="text-align:center;">No referrals recorded.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="footer">
+  Irerero Digital Platform — Computer &amp; Software Engineering, Rwanda — 2025<br>
+  This report is generated automatically from the Irerero system. For medical decisions, consult a qualified health professional.
+</div>
+</body>
+</html>

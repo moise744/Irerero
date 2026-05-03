@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="rw">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; font-size: 12pt; margin: 20px; color: #222; }
+  .header { text-align: center; border-bottom: 3px solid #1F3A6B; padding-bottom: 10px; margin-bottom: 15px; }
+  .header h1 { color: #1F3A6B; font-size: 18pt; margin: 0; }
+  .header h2 { color: #2563EB; font-size: 13pt; margin: 4px 0 0 0; }
+  .section { margin-bottom: 12px; }
+  .section h3 { background: #1F3A6B; color: white; padding: 4px 8px; font-size: 11pt; margin: 0 0 6px 0; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 4px 8px; border: 1px solid #ccc; font-size: 11pt; }
+  td.label { background: #f1f5f9; font-weight: bold; width: 35%; }
+  .urgent { background: #FEE2E2; border: 2px solid #991B1B; padding: 8px; text-align: center; font-weight: bold; color: #991B1B; }
+  .footer { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 8px; font-size: 9pt; color: #666; text-align: center; }
+  .signature-box { border: 1px solid #ccc; height: 50px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>IRERERO</h1>
+  <h2>Urupapuro rwo Guhanurira ku Kigo cy'Ubuzima<br>
+      Health Centre Referral Slip</h2>
+  <p>{{ centre_name }} | Date: {{ referral_date }}</p>
+</div>
+
+{% if is_sam %}
+<div class="urgent">⚠ URGENT SAM REFERRAL — Please see this child immediately</div>
+{% endif %}
+
+<div class="section">
+  <h3>Child Information / Amakuru y'Umwana</h3>
+  <table>
+    <tr><td class="label">Full Name / Izina ryuzuye</td><td>{{ child_name }}</td></tr>
+    <tr><td class="label">Irerero ID</td><td>{{ irerero_id }}</td></tr>
+    <tr><td class="label">Date of Birth / Itariki y'Amavuko</td><td>{{ date_of_birth }}</td></tr>
+    <tr><td class="label">Age / Imyaka</td><td>{{ age_months }} months</td></tr>
+    <tr><td class="label">Sex / Igitsina</td><td>{{ sex }}</td></tr>
+    <tr><td class="label">Guardian / Umubyeyi</td><td>{{ guardian_name }}</td></tr>
+    <tr><td class="label">Guardian Phone / Telefoni</td><td>{{ guardian_phone }}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Latest Measurements / Ibipimo bya Nyuma</h3>
+  <table>
+    <tr><td class="label">Weight / Ibiro</td><td>{{ weight_kg }} kg</td></tr>
+    <tr><td class="label">Height / Uburebure</td><td>{{ height_cm }} cm</td></tr>
+    <tr><td class="label">MUAC / Akaboko</td><td>{{ muac_cm }} cm</td></tr>
+    <tr><td class="label">Nutritional Status</td><td><strong>{{ nutritional_status }}</strong></td></tr>
+    <tr><td class="label">Measurement Date</td><td>{{ measurement_date }}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Reason for Referral / Impamvu yo Guhanurirwa</h3>
+  <p>{{ reason }}</p>
+</div>
+
+<div class="section">
+  <h3>Referring Caregiver / Uwakoze Urupapuro</h3>
+  <table>
+    <tr><td class="label">Name</td><td>{{ referred_by_name }}</td></tr>
+    <tr><td class="label">Centre</td><td>{{ centre_name }}</td></tr>
+    <tr><td class="label">Date</td><td>{{ referral_date }}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>For Health Centre Staff — Outcome Recording</h3>
+  <table>
+    <tr><td class="label">Date Attended</td><td class="signature-box"></td></tr>
+    <tr><td class="label">Diagnosis</td><td class="signature-box"></td></tr>
+    <tr><td class="label">Treatment Given</td><td class="signature-box"></td></tr>
+    <tr><td class="label">Admitted to Hospital</td><td>Yes / No</td></tr>
+    <tr><td class="label">Follow-up Instructions</td><td class="signature-box"></td></tr>
+    <tr><td class="label">Health Worker Signature</td><td class="signature-box"></td></tr>
+  </table>
+</div>
+
+<div class="footer">
+  Irerero Digital Platform — Computer &amp; Software Engineering, Rwanda — 2025<br>
+  This referral slip was generated automatically. All data is from the ECD centre record system.
+</div>
+</body>
+</html>

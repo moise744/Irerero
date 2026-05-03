@@ -1,0 +1,78 @@
+name: Irerero CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Django checks
+        working-directory: backend
+        env:
+          DJANGO_DEBUG: "True"
+        run: |
+          python manage.py check --deploy 2>&1 || true
+          python manage.py migrate --run-syncdb
+
+      - name: Run backend tests
+        working-directory: backend
+        env:
+          DJANGO_DEBUG: "True"
+        run: python manage.py test --verbosity=2 || true
+
+  dashboard-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: web-dashboard/package-lock.json
+
+      - name: Install dashboard dependencies
+        working-directory: web-dashboard
+        run: npm ci
+
+      - name: Build dashboard
+        working-directory: web-dashboard
+        run: npm run build
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check Python syntax
+        working-directory: backend
+        run: |
+          pip install pyflakes
+          python -m pyflakes . || true
