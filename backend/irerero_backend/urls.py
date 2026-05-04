@@ -4,8 +4,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
 
-
-# ✅ Root (homepage) view
 def home(request):
     return JsonResponse({
         "message": "Irerero Backend is running",
@@ -24,21 +22,14 @@ def home(request):
             "reports": "/api/v1/reports/",
             "sync": "/api/v1/sync/",
             "notifications": "/api/v1/notifications/",
+            "ai": "/api/v1/ai/retrain/"
         }
     })
 
-
 urlpatterns = [
-    # ✅ Root URL (fixes your 404)
     path("", home),
-
-    # Admin
     path("admin/", admin.site.urls),
-
-    # Health check
     path("health/", include("sync.health_urls")),
-
-    # API v1 routes
     path("api/v1/", include([
         path("auth/",         include("auth_module.urls")),
         path("users/",        include("auth_module.user_urls")),
@@ -51,8 +42,8 @@ urlpatterns = [
         path("reports/",      include("reports.urls")),
         path("sync/",         include("sync.urls")),
         path("notifications/", include("notifications.urls")),
+        path("ai/retrain/",   __import__('ai.views', fromlist=['MLRetrainView']).MLRetrainView.as_view(), name="ml-retrain"),
     ])),
 ]
 
-# Media files (development only)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

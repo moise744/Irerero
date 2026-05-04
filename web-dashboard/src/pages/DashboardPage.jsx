@@ -1,4 +1,4 @@
-// src/pages/DashboardPage.jsx — dynamic dashboard based on user role — FR-061 to FR-068
+// src/pages/DashboardPage.jsx
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '../services/api'
 import { useAuthStore } from '../hooks/useAuth'
@@ -6,6 +6,7 @@ import AlertsPanel from '../components/alerts/AlertsPanel'
 import SmsInbox from '../components/sms/SmsInbox'
 import StatusDistributionChart from '../components/dashboard/StatusDistributionChart'
 import Header from '../components/layout/Header'
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet' 
 
 const bar = {
   emerald: 'border-l-emerald-600',
@@ -29,7 +30,6 @@ function StatCard({ label, value, sub, variant = 'slate' }) {
 
 export default function DashboardPage() {
   const user = useAuthStore(s => s.user)
-
   const role = user?.role || 'caregiver'
 
   const queryFn =
@@ -171,7 +171,41 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {['district', 'national', 'sys_admin', 'partner'].includes(role) && d.centres && (
+              <div className="bg-white rounded-xl border border-stone-200/90 shadow-sm p-5 mt-6">
+                <h3 className="font-display font-semibold text-stone-900 mb-4">Geographic Hotspot Map</h3>
+                <p className="text-xs text-stone-500 mb-4">Red circles indicate high SAM/MAM concentrations</p>
+                <div className="h-96 w-full rounded-lg overflow-hidden border border-stone-200 z-0 relative">
+                  <MapContainer center={[-1.9403, 29.8739]} zoom={8} scrollWheelZoom={false} className="h-full w-full">
+                    <TileLayer
+                      url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                      attribution='&copy; OpenStreetMap contributors'
+                    />
+                    {d.centres.map(c => (
+                       <CircleMarker
+                         key={c.centre_id}
+                         center={[c.gps_latitude || -1.9403, c.gps_longitude || 29.8739]}
+                         radius={Math.max(5, c.sam_percent)}
+                         pathOptions={{ 
+                           fillColor: c.sam_percent > 5 ? '#ef4444' : '#22c55e', 
+                           color: 'white', 
+                           weight: 1, 
+                           fillOpacity: 0.7 
+                         }}
+                       >
+                         <Popup>
+                           <strong>{c.centre_name}</strong><br/>
+                           Enrolled: {c.total_enrolled}<br/>
+                           SAM: {c.sam_percent}%
+                         </Popup>
+                       </CircleMarker>
+                    ))}
+                  </MapContainer>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
               <AlertsPanel compact />
               <SmsInbox />
             </div>

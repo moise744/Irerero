@@ -1,11 +1,9 @@
 // lib/screens/children/register_child_screen.dart
-//
-// Child registration form — mobile caregiver workflow.
-// Saves locally first (offline-first) then enqueues for /api/v1/sync/ as type "child".
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart'; 
 
 import '../../db/database_helper.dart';
 import '../../services/auth_service.dart';
@@ -20,16 +18,18 @@ class RegisterChildScreen extends StatefulWidget {
 
 class _RegisterChildScreenState extends State<RegisterChildScreen> {
   final _formKey = GlobalKey<FormState>();
-
-  final _nameCtrl     = TextEditingController();
+  final _nameCtrl = TextEditingController();
   final _guardianCtrl = TextEditingController();
-  final _phoneCtrl    = TextEditingController();
-  final _villageCtrl  = TextEditingController();
-  final _notesCtrl    = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _villageCtrl = TextEditingController();
+  final _notesCtrl = TextEditingController();
 
   DateTime? _dob;
   String _sex = 'female';
   bool _saving = false;
+  bool _consentGiven = false; 
+  XFile? _photo; 
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void dispose() {
@@ -52,6 +52,11 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
     if (picked != null && mounted) setState(() => _dob = picked);
   }
 
+  Future<void> _takePhoto() async {
+    final XFile? photo = await _picker.pickImage(source: ImageSource.camera, maxWidth: 600);
+    if (photo != null && mounted) setState(() => _photo = photo);
+  }
+
   String _isoDate(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
@@ -63,11 +68,17 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
       );
       return;
     }
+    if (!_consentGiven) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ugomba kwemeza uburenganzira bw\'umubyeyi.'), backgroundColor: Colors.red),
+      );
+      return;
+    }
 
     final auth = context.read<AuthService>();
     final sync = context.read<SyncService>();
 
-    if (!auth.isLoggedIn || auth.centreId == null || auth.centreId!.toString().isEmpty) {
+    if (!auth.isLoggedIn || auth.centreId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ntushobora kwandika umwana utinjiye (login) neza.'), backgroundColor: Colors.red),
       );
@@ -78,24 +89,20 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
     final now = DateTime.now();
     final childUuid = const Uuid().v4();
     final nowIso = now.toIso8601String();
-    final dobIso = _isoDate(_dob!);
-    final enrolIso = _isoDate(now);
 
-    // Local child record (offline-first). We store centre_code as centre UUID string
-    // so it is non-empty and stable; server is authoritative for centre metadata.
     await DatabaseHelper.instance.insert('children', {
       'uuid': childUuid,
-      'irerero_id': 'LOCAL-$childUuid', // replaced after first server sync/pull if needed
+      'irerero_id': 'LOCAL-$childUuid',
       'centre_code': auth.centreId!.toString(),
       'full_name': _nameCtrl.text.trim(),
-      'date_of_birth': dobIso,
+      'date_of_birth': _isoDate(_dob!),
       'sex': _sex,
       'guardian_name': _guardianCtrl.text.trim(),
       'guardian_phone': _phoneCtrl.text.trim(),
       'home_village': _villageCtrl.text.trim(),
-      'enrolment_date': enrolIso,
+      'enrolment_date': _isoDate(now),
       'status': 'active',
-      'photo_path': '',
+      'photo_path': _photo?.path ?? '',
       'notes': _notesCtrl.text.trim(),
       'created_by': auth.userId ?? '',
       'synced_at': '',
@@ -103,14 +110,13 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
       'updated_at': nowIso,
     });
 
-    // Queue server upsert via /sync/ (backend supports type == "child")
     await sync.enqueue(
       entityType: 'child',
       entityUuid: childUuid,
       payload: {
         'centre_id': auth.centreId,
         'full_name': _nameCtrl.text.trim(),
-        'date_of_birth': dobIso,
+        'date_of_birth': _isoDate(_dob!),
         'sex': _sex,
         'guardian_name': _guardianCtrl.text.trim(),
         'guardian_phone': _phoneCtrl.text.trim(),
@@ -123,33 +129,36 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
 
     if (!mounted) return;
     setState(() => _saving = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Umwana yanditswe (offline-first).'), backgroundColor: Colors.green),
-    );
     Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Andika Umwana'),
-      ),
+      appBar: AppBar(title: const Text('Andika Umwana')),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            Center(
+              child: GestureDetector(
+                onTap: _takePhoto,
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.grey.shade200,
+                  backgroundImage: _photo != null ? FileImage(File(_photo!.path)) : null,
+                  child: _photo == null ? const Icon(Icons.camera_alt, size: 40, color: Colors.grey) : null,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _nameCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Amazina y’umwana',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'Amazina y’umwana', border: OutlineInputBorder()),
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Andika amazina.' : null,
             ),
             const SizedBox(height: 12),
-
             Row(
               children: [
                 Expanded(
@@ -162,11 +171,8 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    initialValue: _sex,
-                    decoration: const InputDecoration(
-                      labelText: 'Igitsina',
-                      border: OutlineInputBorder(),
-                    ),
+                    value: _sex,
+                    decoration: const InputDecoration(labelText: 'Igitsina', border: OutlineInputBorder()),
                     items: const [
                       DropdownMenuItem(value: 'female', child: Text('Gore')),
                       DropdownMenuItem(value: 'male', child: Text('Gabo')),
@@ -177,59 +183,41 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
               ],
             ),
             const SizedBox(height: 12),
-
             TextFormField(
               controller: _guardianCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Izina ry’umurera/umubyeyi',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'Izina ry’umurera/umubyeyi', border: OutlineInputBorder()),
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Andika izina ry’umurera.' : null,
             ),
             const SizedBox(height: 12),
-
             TextFormField(
               controller: _phoneCtrl,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Telefoni y’umurera',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'Telefoni y’umurera', border: OutlineInputBorder()),
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Andika telefoni.' : null,
             ),
             const SizedBox(height: 12),
-
             TextFormField(
               controller: _villageCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Umudugudu',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'Umudugudu', border: OutlineInputBorder()),
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Andika umudugudu.' : null,
             ),
             const SizedBox(height: 12),
-
-            TextFormField(
-              controller: _notesCtrl,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Ibisobanuro (notes) (optional)',
-                border: OutlineInputBorder(),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+              child: CheckboxListTile(
+                value: _consentGiven,
+                onChanged: (v) => setState(() => _consentGiven = v ?? false),
+                title: const Text('Ndemeza ko umubyeyi yatanze uburenganzira bwo kubika amakuru y\'ubuzima bw\'umwana (Rwanda Law No. 058/2021).', style: TextStyle(fontSize: 12)),
+                controlAffinity: ListTileControlAffinity.leading,
               ),
             ),
             const SizedBox(height: 16),
-
             SizedBox(
               height: 52,
               child: FilledButton.icon(
                 onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.save),
+                icon: _saving ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.save),
                 label: Text(_saving ? 'Biri kubikwa…' : 'Bika'),
               ),
             ),
@@ -239,4 +227,3 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
     );
   }
 }
-

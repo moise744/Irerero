@@ -1,8 +1,4 @@
-// screens/nutrition/nutrition_screen.dart
-//
-// Nutrition programme management — enrolment tracking and meal recording.
-// FR-051 to FR-060.
-
+// lib/screens/nutrition/nutrition_screen.dart
 import 'package:flutter/material.dart';
 import '../../db/database_helper.dart';
 import 'package:uuid/uuid.dart';
@@ -36,7 +32,6 @@ class _NutritionScreenState extends State<NutritionScreen>
           orderBy: 'enrolment_date DESC');
       final meals = await db.query('meal_records', orderBy: 'date DESC');
 
-      // Resolve child names for nicer display.
       _childNameByUuid.clear();
       final children = await db.query('children', orderBy: 'full_name ASC');
       for (final c in children) {
@@ -86,9 +81,24 @@ class _NutritionScreenState extends State<NutritionScreen>
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.restaurant_menu),
-        label: const Text('Record Meal'),
-        onPressed: () => _showRecordMealDialog(context),
+        icon: const Icon(Icons.add),
+        label: const Text('Actions'),
+        onPressed: () {
+          showModalBottomSheet(context: context, builder: (ctx) => SafeArea(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              ListTile(
+                leading: const Icon(Icons.restaurant_menu),
+                title: const Text('Record Daily Meal'),
+                onTap: () { Navigator.pop(ctx); _showRecordMealDialog(context); },
+              ),
+              ListTile(
+                leading: const Icon(Icons.person_add),
+                title: const Text('Enrol Child in Programme'),
+                onTap: () { Navigator.pop(ctx); _showEnrolmentDialog(context); },
+              ),
+            ]),
+          ));
+        },
       ),
     );
   }
@@ -232,6 +242,51 @@ class _NutritionScreenState extends State<NutritionScreen>
         },
       ),
     );
+  }
+
+  Future<void> _showEnrolmentDialog(BuildContext context) async {
+    final children = await DatabaseHelper.instance.query('children');
+    String? selectedChild;
+    String progType = 'sfp';
+
+    if (!context.mounted) return;
+    await showDialog(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('Enrol Child'),
+      content: StatefulBuilder(builder: (ctx, setDialogState) {
+        return Column(mainAxisSize: MainAxisSize.min, children: [
+          DropdownButtonFormField<String>(
+            hint: const Text('Select Child'),
+            items: children.map((c) => DropdownMenuItem(value: c['uuid'].toString(), child: Text(c['full_name'].toString()))).toList(),
+            onChanged: (v) => setDialogState(() => selectedChild = v),
+          ),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            value: progType,
+            items: const [
+              DropdownMenuItem(value: 'sfp', child: Text('SFP (MAM)')),
+              DropdownMenuItem(value: 'tfp', child: Text('TFP (SAM)')),
+              DropdownMenuItem(value: 'rutf', child: Text('RUTF (SAM Outpatient)')),
+            ],
+            onChanged: (v) => setDialogState(() => progType = v!),
+          ),
+        ]);
+      }),
+      actions: [
+        FilledButton(onPressed: () async {
+          if (selectedChild == null) return;
+          await DatabaseHelper.instance.insert('nutrition_programmes', {
+            'uuid': const Uuid().v4(),
+            'child_uuid': selectedChild,
+            'programme_type': progType,
+            'enrolment_date': DateTime.now().toIso8601String().substring(0, 10),
+            'outcome': 'ongoing',
+            'created_at': DateTime.now().toIso8601String()
+          });
+          Navigator.pop(ctx);
+          _loadData();
+        }, child: const Text('Enrol'))
+      ],
+    ));
   }
 
   Future<void> _showRecordMealDialog(BuildContext context) async {
