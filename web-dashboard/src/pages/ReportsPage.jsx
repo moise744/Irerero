@@ -41,9 +41,10 @@ export default function ReportsPage() {
               <h3 className="font-bold text-lg font-display">Sector Aggregated Report</h3>
               <p className="text-teal-100 text-sm">Download combined statistics for all centres in your jurisdiction.</p>
             </div>
-            <button onClick={() => alert("Sector report downloaded successfully.")} className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white font-semibold rounded shadow">
+            {/* Wired the button to the real API endpoint */}
+            <a href={reportsApi.sectorPdfUrl()} target="_blank" rel="noreferrer" className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white font-semibold rounded shadow">
               Generate Sector PDF
-            </button>
+            </a>
           </div>
         )}
 
@@ -111,12 +112,6 @@ export default function ReportsPage() {
             )}
           </div>
         ))}
-        {!isLoading && !isError && (!data || data.length === 0) && (
-          <div className="text-center py-16 text-stone-500 border border-dashed border-stone-300 rounded-xl bg-white">
-            <p className="text-sm font-medium text-stone-700">No reports yet</p>
-            <p className="mt-2 text-sm max-w-md mx-auto">Monthly summaries are generated automatically at period end.</p>
-          </div>
-        )}
       </div>
     </div>
   )

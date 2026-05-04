@@ -1,9 +1,6 @@
+// src/services/api.js
 import axios from 'axios'
 
-/**
- * Resolved on each request so phone/LAN URLs always hit :8000 on the same host.
- * Omit VITE_API_URL on LAN testing or it will pin to localhost and break phones.
- */
 export function resolveApiBase() {
   const fromEnv = import.meta.env.VITE_API_URL
   if (fromEnv) return fromEnv.replace(/\/$/, '')
@@ -27,18 +24,22 @@ api.interceptors.response.use(r => r, err => {
   return Promise.reject(err)
 })
 export default api
+
 export const authApi = {
   login:  (u,p) => api.post('/auth/login/', {username:u, password:p}),
   me:     ()    => api.get('/auth/me/'),
   logout: (r)   => api.post('/auth/logout/', {refresh:r}),
 }
+
+// Added 'p' (parameters) so filters can be sent to the backend
 export const dashboardApi = {
-  caregiver: () => api.get('/reports/dashboards/caregiver/'),
-  centre:    () => api.get('/reports/dashboards/centre/'),
-  sector:    () => api.get('/reports/dashboards/sector/'),
-  district:  () => api.get('/reports/dashboards/district/'),
-  national:  () => api.get('/reports/dashboards/national/'),
+  caregiver: (p) => api.get('/reports/dashboards/caregiver/', {params:p}),
+  centre:    (p) => api.get('/reports/dashboards/centre/', {params:p}),
+  sector:    (p) => api.get('/reports/dashboards/sector/', {params:p}),
+  district:  (p) => api.get('/reports/dashboards/district/', {params:p}),
+  national:  (p) => api.get('/reports/dashboards/national/', {params:p}),
 }
+
 export const childrenApi = {
   list:           p  => api.get('/children/', {params:p}),
   get:            id => api.get(`/children/${id}/`),
@@ -48,17 +49,21 @@ export const childrenApi = {
   referrals:      id => api.get('/referrals/', {params:{child:id}}),
   immunisations:  id => api.get('/children/immunisations/', {params:{child:id}}),
 }
+
 export const alertsApi = {
   list:   p  => api.get('/alerts/', {params:p}),
   action: (id,txt) => api.patch(`/alerts/${id}/action/`, {action_taken:txt}),
 }
+
 export const smsApi = {
   log:   p    => api.get('/notifications/sms-log/', {params:p}),
   batch: data => api.post('/notifications/sms/batch/', data),
 }
+
 export const reportsApi = {
   monthly: p   => api.get('/reports/monthly/', {params:p}),
   approve: (id,notes) => api.post(`/reports/monthly/${id}/approve/`, {manager_notes:notes}),
   pdfUrl:  id  => `${resolveApiBase()}/reports/monthly/${id}.pdf`,
   csvUrl:  id  => `${resolveApiBase()}/reports/monthly/${id}.csv`,
+  sectorPdfUrl: () => `${resolveApiBase()}/reports/sector/report.pdf`, // Added for Sector PDF
 }
