@@ -1,11 +1,8 @@
 // lib/screens/children/child_profile_screen.dart
-//
-// 7-tab child profile — FR-062.
-// Tabs: Growth, Attendance, Nutrition, Referrals, Alerts, Immunisation, Notes.
-
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../../db/database_helper.dart';
 import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
@@ -27,13 +24,13 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> with SingleTick
   String _currentStatus = 'normal';
   String? _trendArrow;
 
-  // 7 tabs — FR-062, SRS §5.1
-  static const _tabLabels = ['Imikurire', 'Ibarura', 'Indyo', 'Guhanura', 'Iburira', 'Inkingo', 'Inyandiko'];
+  // 8 tabs now including Milestones (Ibimenyetso)
+  static const _tabLabels = ['Imikurire', 'Ibarura', 'Indyo', 'Guhanura', 'Iburira', 'Inkingo', 'Ibimenyetso', 'Inyandiko'];
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 7, vsync: this);
+    _tabs = TabController(length: 8, vsync: this);
     _loadData();
   }
 
@@ -45,7 +42,6 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> with SingleTick
 
     if (meas.isNotEmpty) {
       final last = meas.first;
-      // Trend arrow — PUD §6.2
       String? arrow;
       if (meas.length >= 2) {
         final curr = (last['weight_kg'] as num?)?.toDouble() ?? 0;
@@ -73,7 +69,6 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> with SingleTick
           Text(child['irerero_id'] as String? ?? '', style: const TextStyle(fontSize: 12)),
         ]),
         actions: [
-          // Trend arrow on all profile screens — PUD §6.2
           if (_trendArrow != null) Padding(
             padding: const EdgeInsets.all(8),
             child: Chip(label: Text(_trendArrow!, style: TextStyle(
@@ -95,6 +90,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> with SingleTick
         _ReferralsTab(child: child),
         _AlertsTab(child: child),
         _ImmunisationTab(child: child),
+        _MilestonesTab(child: child),
         _NotesTab(child: child),
       ]),
     );
@@ -132,11 +128,7 @@ class _GrowthTab extends StatelessWidget {
             _MeasRow('Umutwe', '${lastMeasurement!['head_circ_cm'] ?? '—'} cm'),
           ],
           const SizedBox(height: 16),
-
-          // FR-024: growth curve chart with WHO reference percentile lines.
-          Expanded(
-            child: _WhoGrowthChart(child: child),
-          ),
+          Expanded(child: _WhoGrowthChart(child: child)),
         ],
       ),
     );
@@ -146,13 +138,11 @@ class _GrowthTab extends StatelessWidget {
 class _WhoGrowthChart extends StatefulWidget {
   final Map<String, dynamic> child;
   const _WhoGrowthChart({required this.child});
-
-  @override
-  State<_WhoGrowthChart> createState() => _WhoGrowthChartState();
+  @override State<_WhoGrowthChart> createState() => _WhoGrowthChartState();
 }
 
 class _WhoGrowthChartState extends State<_WhoGrowthChart> {
-  bool _showWeight = true; // toggle between weight-for-age and height-for-age
+  bool _showWeight = true;
 
   @override
   Widget build(BuildContext context) {
@@ -162,9 +152,7 @@ class _WhoGrowthChartState extends State<_WhoGrowthChart> {
     final childUuid = (child['uuid'] as String?) ?? '';
     final cs = Theme.of(context).colorScheme;
 
-    if (dob == null || childUuid.isEmpty) {
-      return const Center(child: Text('Missing child DOB/ID for chart.'));
-    }
+    if (dob == null || childUuid.isEmpty) return const Center(child: Text('Missing child DOB/ID.'));
 
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: DatabaseHelper.instance.query(
@@ -177,16 +165,13 @@ class _WhoGrowthChartState extends State<_WhoGrowthChart> {
       builder: (ctx, snap) {
         if (!snap.hasData) return const Center(child: CircularProgressIndicator());
         final rows = snap.data!;
-
         final points = <FlSpot>[];
         for (final m in rows) {
           final recordedAt = DateTime.tryParse(m['recorded_at'] as String? ?? '');
           if (recordedAt == null) continue;
           final ageMonths = (recordedAt.difference(dob).inDays / 30.4375);
           if (ageMonths < 0 || ageMonths > 60) continue;
-          final y = _showWeight
-              ? (m['weight_kg'] as num?)?.toDouble()
-              : (m['height_cm'] as num?)?.toDouble();
+          final y = _showWeight ? (m['weight_kg'] as num?)?.toDouble() : (m['height_cm'] as num?)?.toDouble();
           if (y == null) continue;
           points.add(FlSpot(double.parse(ageMonths.toStringAsFixed(2)), y));
         }
@@ -200,28 +185,14 @@ class _WhoGrowthChartState extends State<_WhoGrowthChart> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        _showWeight ? 'Weight-for-Age (kg)' : 'Height-for-Age (cm)',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
+                      child: Text(_showWeight ? 'Weight-for-Age (kg)' : 'Height-for-Age (cm)', style: const TextStyle(fontWeight: FontWeight.bold))),
                     SegmentedButton<bool>(
                       segments: const [
-                        ButtonSegment(value: true, label: Text('Weight')),
-                        ButtonSegment(value: false, label: Text('Height')),
+                        ButtonSegment(value: true, label: Text('W')),
+                        ButtonSegment(value: false, label: Text('H')),
                       ],
                       selected: {_showWeight},
                       onSelectionChanged: (v) => setState(() => _showWeight = v.first),
-                      style: ButtonStyle(
-                        visualDensity: VisualDensity.compact,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        padding: const WidgetStatePropertyAll(
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -230,76 +201,33 @@ class _WhoGrowthChartState extends State<_WhoGrowthChart> {
                   child: FutureBuilder<_CurveBundle>(
                     future: _buildCurves(sex: sex, isWeight: _showWeight),
                     builder: (ctx, curveSnap) {
-                      if (!curveSnap.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
+                      if (!curveSnap.hasData) return const Center(child: CircularProgressIndicator());
                       final curves = curveSnap.data!;
-                      final allY = [
-                        ...curves.p3.map((e) => e.y),
-                        ...curves.p97.map((e) => e.y),
-                        ...points.map((e) => e.y),
-                      ];
+                      final allY = [...curves.p3.map((e) => e.y), ...curves.p97.map((e) => e.y), ...points.map((e) => e.y)];
                       final minY = (allY.isEmpty ? 0.0 : allY.reduce((a, b) => a < b ? a : b)) * 0.95;
                       final maxY = (allY.isEmpty ? 10.0 : allY.reduce((a, b) => a > b ? a : b)) * 1.05;
 
                       return LineChart(
                         LineChartData(
-                          minX: 0,
-                          maxX: 60,
-                          minY: minY.isFinite ? minY : 0,
-                          maxY: maxY.isFinite ? maxY : 10,
+                          minX: 0, maxX: 60, minY: minY.isFinite ? minY : 0, maxY: maxY.isFinite ? maxY : 10,
                           gridData: const FlGridData(show: true),
-                          borderData: FlBorderData(
-                            show: true,
-                            border: Border.all(color: cs.outlineVariant),
-                          ),
+                          borderData: FlBorderData(show: true, border: Border.all(color: cs.outlineVariant)),
                           titlesData: FlTitlesData(
                             rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                             topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                reservedSize: 28,
-                                interval: 12,
-                                getTitlesWidget: (v, meta) =>
-                                    Padding(padding: const EdgeInsets.only(top: 6), child: Text('${v.toInt()}m', style: const TextStyle(fontSize: 10))),
-                              ),
-                            ),
-                            leftTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                reservedSize: 40,
-                                interval: _showWeight ? 2 : 5,
-                                getTitlesWidget: (v, meta) =>
-                                    Text(v.toStringAsFixed(0), style: const TextStyle(fontSize: 10)),
-                              ),
-                            ),
+                            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28, interval: 12, getTitlesWidget: (v, meta) => Padding(padding: const EdgeInsets.only(top: 6), child: Text('${v.toInt()}m', style: const TextStyle(fontSize: 10))))),
+                            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, interval: _showWeight ? 2 : 5, getTitlesWidget: (v, meta) => Text(v.toStringAsFixed(0), style: const TextStyle(fontSize: 10)))),
                           ),
                           lineBarsData: [
-                            _curveLine(curves.p3, Colors.grey.shade400),
-                            _curveLine(curves.p15, Colors.grey.shade500),
-                            _curveLine(curves.p50, Colors.grey.shade700),
-                            _curveLine(curves.p85, Colors.grey.shade500),
+                            _curveLine(curves.p3, Colors.grey.shade400), _curveLine(curves.p15, Colors.grey.shade500),
+                            _curveLine(curves.p50, Colors.grey.shade700), _curveLine(curves.p85, Colors.grey.shade500),
                             _curveLine(curves.p97, Colors.grey.shade400),
-                            LineChartBarData(
-                              spots: points,
-                              isCurved: false,
-                              color: cs.primary,
-                              barWidth: 3,
-                              dotData: const FlDotData(show: true),
-                            ),
+                            LineChartBarData(spots: points, isCurved: false, color: cs.primary, barWidth: 3, dotData: const FlDotData(show: true)),
                           ],
                         ),
                       );
                     },
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  points.isEmpty
-                      ? 'No measurements yet to plot.'
-                      : 'WHO reference curves: P3, P15, P50, P85, P97',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
                 ),
               ],
             ),
@@ -309,29 +237,15 @@ class _WhoGrowthChartState extends State<_WhoGrowthChart> {
     );
   }
 
-  LineChartBarData _curveLine(List<FlSpot> spots, Color c) => LineChartBarData(
-        spots: spots,
-        isCurved: true,
-        color: c,
-        barWidth: 1.5,
-        dotData: const FlDotData(show: false),
-      );
+  LineChartBarData _curveLine(List<FlSpot> spots, Color c) => LineChartBarData(spots: spots, isCurved: true, color: c, barWidth: 1.5, dotData: const FlDotData(show: false));
 
   Future<_CurveBundle> _buildCurves({required String sex, required bool isWeight}) async {
     final indicator = isWeight ? 'waz' : 'haz';
     final z = ZScoreCalculator.percentileZ;
-    final p3 = <FlSpot>[];
-    final p15 = <FlSpot>[];
-    final p50 = <FlSpot>[];
-    final p85 = <FlSpot>[];
-    final p97 = <FlSpot>[];
+    final p3 = <FlSpot>[]; final p15 = <FlSpot>[]; final p50 = <FlSpot>[]; final p85 = <FlSpot>[]; final p97 = <FlSpot>[];
 
     for (int m = 0; m <= 60; m++) {
-      final row = await ZScoreCalculator.instance.getNearestLmsRow(
-        indicator: indicator,
-        sex: sex,
-        indexVal: m.toDouble(),
-      );
+      final row = await ZScoreCalculator.instance.getNearestLmsRow(indicator: indicator, sex: sex, indexVal: m.toDouble());
       if (row == null) continue;
       final x = m.toDouble();
       p3.add(FlSpot(x, ZScoreCalculator.instance.lmsInverse(z[3]!, row.l, row.m, row.s)));
@@ -340,7 +254,6 @@ class _WhoGrowthChartState extends State<_WhoGrowthChart> {
       p85.add(FlSpot(x, ZScoreCalculator.instance.lmsInverse(z[85]!, row.l, row.m, row.s)));
       p97.add(FlSpot(x, ZScoreCalculator.instance.lmsInverse(z[97]!, row.l, row.m, row.s)));
     }
-
     return _CurveBundle(p3: p3, p15: p15, p50: p50, p85: p85, p97: p97);
   }
 }
@@ -353,14 +266,7 @@ class _CurveBundle {
 class _MeasRow extends StatelessWidget {
   final String label, value;
   const _MeasRow(this.label, this.value);
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: const TextStyle(color: Colors.grey)),
-      Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-    ]),
-  );
+  @override Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: const TextStyle(color: Colors.grey)), Text(value, style: const TextStyle(fontWeight: FontWeight.bold))]));
 }
 
 // ── Tab 2: Attendance ──────────────────────────────────────────────────────
@@ -371,164 +277,88 @@ class _AttendanceTab extends StatefulWidget {
 }
 class _AttendanceTabState extends State<_AttendanceTab> {
   List<Map<String, dynamic>> _records = [];
-  @override
-  void initState() {
+  @override void initState() {
     super.initState();
-    DatabaseHelper.instance.query('attendance',
-        where: 'child_uuid = ?', whereArgs: [widget.child['uuid']],
-        orderBy: 'date DESC', limit: 30)
+    DatabaseHelper.instance.query('attendance', where: 'child_uuid = ?', whereArgs: [widget.child['uuid']], orderBy: 'date DESC', limit: 30)
         .then((r) { if (mounted) setState(() => _records = r); });
   }
-  @override
-  Widget build(BuildContext context) => _records.isEmpty
+  @override Widget build(BuildContext context) => _records.isEmpty
       ? const Center(child: Text('No attendance records yet'))
       : ListView.builder(itemCount: _records.length, itemBuilder: (_, i) {
           final r = _records[i];
           return ListTile(
-            leading: Icon(r['status'] == 'present' ? Icons.check_circle : Icons.cancel,
-                color: r['status'] == 'present' ? Colors.green : Colors.red),
+            leading: Icon(r['status'] == 'present' ? Icons.check_circle : Icons.cancel, color: r['status'] == 'present' ? Colors.green : Colors.red),
             title: Text(r['date'] as String? ?? ''),
-            subtitle: r['absence_reason'] != null && (r['absence_reason'] as String).isNotEmpty
-                ? Text(r['absence_reason'] as String) : null,
+            subtitle: r['absence_reason'] != null && (r['absence_reason'] as String).isNotEmpty ? Text(r['absence_reason'] as String) : null,
           );
         });
 }
 
-// ── Tabs 3-7: Stubs (full implementation in Phase 3+) ─────────────────────
+// ── Tab 3: Nutrition ─────────────────────────────────────────────────────
 class _NutritionTab extends StatelessWidget {
   final Map<String, dynamic> child;
   const _NutritionTab({required this.child});
-  @override
-  Widget build(BuildContext context) {
-    // Centre-level nutrition module lives in NutritionScreen.
-    // Child-level nutrition programme status is still visible there via enrolments.
+  @override Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.restaurant, size: 48, color: Colors.green),
-          const SizedBox(height: 8),
-          const Text('Indyo / Nutrition Programme',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text(
-            'Reba gahunda z’indyo (SFP/TFP) n’amafunguro y’aho muri centre.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const NutritionScreen()),
-            ),
-            icon: const Icon(Icons.open_in_new),
-            label: const Text('Fungura Indyo'),
-          ),
-        ]),
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.restaurant, size: 48, color: Colors.green),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NutritionScreen())),
+          icon: const Icon(Icons.open_in_new), label: const Text('Fungura Indyo'),
+        ),
+      ]),
     );
   }
 }
 
+// ── Tab 4: Referrals ─────────────────────────────────────────────────────
 class _ReferralsTab extends StatelessWidget {
   final Map<String, dynamic> child;
   const _ReferralsTab({required this.child});
-  @override
-  Widget build(BuildContext context) {
+  @override Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.local_hospital, size: 48, color: Colors.blue),
-          const SizedBox(height: 8),
-          const Text('Guhanura / Referrals',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text(
-            'Kora referral nshya, ukurikirane “Pending/Attended/Treatment/Closed”, kandi wandike ibisubizo.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const ReferralScreen()),
-            ),
-            icon: const Icon(Icons.open_in_new),
-            label: const Text('Fungura Referrals'),
-          ),
-        ]),
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.local_hospital, size: 48, color: Colors.blue),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ReferralScreen())),
+          icon: const Icon(Icons.open_in_new), label: const Text('Fungura Referrals'),
+        ),
+      ]),
     );
   }
 }
 
+// ── Tab 5: Alerts ────────────────────────────────────────────────────────
 class _AlertsTab extends StatelessWidget {
   final Map<String, dynamic> child;
   const _AlertsTab({required this.child});
-  @override
-  Widget build(BuildContext context) {
-    // Child-specific alert history (offline-first): filter local alerts by child_uuid.
+  @override Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: DatabaseHelper.instance.query(
-        'alerts',
-        where: 'child_uuid = ?',
-        whereArgs: [child['uuid']],
-        orderBy:
-            "CASE severity WHEN 'urgent' THEN 0 WHEN 'warning' THEN 1 ELSE 2 END ASC, generated_at DESC",
-      ),
+      future: DatabaseHelper.instance.query('alerts', where: 'child_uuid = ?', whereArgs: [child['uuid']], orderBy: "CASE severity WHEN 'urgent' THEN 0 WHEN 'warning' THEN 1 ELSE 2 END ASC, generated_at DESC"),
       builder: (ctx, snap) {
-        if (!snap.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
         final rows = snap.data!;
-        if (rows.isEmpty) {
-          return const Center(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.check_circle_outline, size: 48, color: Colors.green),
-              SizedBox(height: 8),
-              Text('Nta burira kuri uyu mwana.'),
-            ]),
-          );
-        }
-        Color colour(String s) =>
-            s == 'urgent' ? Colors.red : s == 'warning' ? Colors.orange : Colors.blue;
+        if (rows.isEmpty) return const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.check_circle_outline, size: 48, color: Colors.green), SizedBox(height: 8), Text('Nta burira kuri uyu mwana.')]));
+        Color colour(String s) => s == 'urgent' ? Colors.red : s == 'warning' ? Colors.orange : Colors.blue;
         return ListView.builder(
           padding: const EdgeInsets.all(12),
           itemCount: rows.length,
           itemBuilder: (_, i) {
             final a = rows[i];
             final sev = a['severity'] as String? ?? 'warning';
-            final exp = a['explanation_rw'] as String? ??
-                a['explanation_en'] as String? ??
-                '';
-            final rec = a['recommendation_rw'] as String? ??
-                a['recommendation_en'] as String? ??
-                '';
             return Card(
               margin: const EdgeInsets.only(bottom: 10),
               child: ExpansionTile(
                 leading: Icon(Icons.warning_rounded, color: colour(sev)),
-                title: Text(exp,
-                    maxLines: 2, overflow: TextOverflow.ellipsis),
-                subtitle: Text(sev.toUpperCase(),
-                    style: TextStyle(
-                        color: colour(sev),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11)),
+                title: Text(a['explanation_rw'] as String? ?? a['explanation_en'] as String? ?? '', maxLines: 2, overflow: TextOverflow.ellipsis),
+                subtitle: Text(sev.toUpperCase(), style: TextStyle(color: colour(sev), fontWeight: FontWeight.bold, fontSize: 11)),
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Ingamba:',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text(rec),
-                      ],
-                    ),
-                  )
+                  Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('Ingamba:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4), Text(a['recommendation_rw'] as String? ?? a['recommendation_en'] as String? ?? ''),
+                  ]))
                 ],
               ),
             );
@@ -539,54 +369,45 @@ class _AlertsTab extends StatelessWidget {
   }
 }
 
+// ── Tab 6: Immunisation ──────────────────────────────────────────────────
 class _ImmunisationTab extends StatefulWidget {
   final Map<String, dynamic> child;
   const _ImmunisationTab({required this.child});
   @override State<_ImmunisationTab> createState() => _ImmunisationTabState();
 }
-
 class _ImmunisationTabState extends State<_ImmunisationTab> {
   Future<void> _markAdministered(String uuid) async {
     await DatabaseHelper.instance.update('immunisation', 
       {'status': 'administered', 'administered_date': DateTime.now().toIso8601String().substring(0, 10), 'synced_at': null},
       where: 'uuid = ?', whereArgs: [uuid]);
-    setState(() {}); // Refresh tab
+    setState(() {});
   }
-
-  @override
-  Widget build(BuildContext context) {
+  @override Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: DatabaseHelper.instance.query('immunisation', where: 'child_uuid = ?', whereArgs: [widget.child['uuid']], orderBy: 'scheduled_date ASC'),
       builder: (ctx, snap) {
         if (!snap.hasData) return const Center(child: CircularProgressIndicator());
         final rows = snap.data!;
-        
         if (rows.isEmpty) {
-          return Center(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.vaccines, size: 48, color: Colors.teal.shade200),
-              const SizedBox(height: 16),
-              const Text('No immunisation records yet.'),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () async {
-                  // Generate default EPI schedule for child
-                  final vaccines = ['BCG, OPV0', 'Polio 1, DTP 1', 'Measles 1'];
-                  for (int i=0; i<vaccines.length; i++) {
-                    await DatabaseHelper.instance.insert('immunisation', {
-                      'uuid': const Uuid().v4(), 'child_uuid': widget.child['uuid'],
-                      'vaccine_name': vaccines[i], 'status': 'due',
-                      'scheduled_date': DateTime.now().add(Duration(days: 30 * i)).toIso8601String().substring(0, 10)
-                    });
-                  }
-                  setState(() {});
-                },
-                icon: const Icon(Icons.add), label: const Text('Initialize EPI Schedule'),
-              )
-            ]),
-          );
+          return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.vaccines, size: 48, color: Colors.teal.shade200),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () async {
+                final vaccines = ['BCG, OPV0', 'Polio 1, DTP 1', 'Measles 1'];
+                for (int i=0; i<vaccines.length; i++) {
+                  await DatabaseHelper.instance.insert('immunisation', {
+                    'uuid': const Uuid().v4(), 'child_uuid': widget.child['uuid'],
+                    'vaccine_name': vaccines[i], 'status': 'due',
+                    'scheduled_date': DateTime.now().add(Duration(days: 30 * i)).toIso8601String().substring(0, 10)
+                  });
+                }
+                setState(() {});
+              },
+              icon: const Icon(Icons.add), label: const Text('Initialize EPI Schedule'),
+            )
+          ]));
         }
-        
         return ListView.builder(
           padding: const EdgeInsets.all(12),
           itemCount: rows.length,
@@ -594,22 +415,13 @@ class _ImmunisationTabState extends State<_ImmunisationTab> {
             final v = rows[i];
             final status = (v['status'] as String?) ?? 'due';
             final colour = status == 'administered' ? Colors.green : (status == 'overdue' ? Colors.red : Colors.orange);
-            
-            return Card(
-              margin: const EdgeInsets.only(bottom: 10),
-              child: ListTile(
-                leading: Icon(Icons.vaccines, color: colour),
-                title: Text(v['vaccine_name'] as String? ?? ''),
-                subtitle: Text('Scheduled: ${v['scheduled_date'] ?? '—'}'
-                  '${(v['administered_date'] as String?)?.isNotEmpty == true ? '\nGiven: ${v['administered_date']}' : ''}'),
-                trailing: status == 'administered' 
-                  ? Text('GIVEN', style: TextStyle(color: colour, fontWeight: FontWeight.bold, fontSize: 12))
-                  : OutlinedButton(
-                      onPressed: () => _markAdministered(v['uuid']),
-                      child: const Text('Mark Given'),
-                    ),
-              ),
-            );
+            return Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(
+              leading: Icon(Icons.vaccines, color: colour),
+              title: Text(v['vaccine_name'] as String? ?? ''),
+              subtitle: Text('Scheduled: ${v['scheduled_date'] ?? '—'} ${(v['administered_date'] as String?)?.isNotEmpty == true ? '\nGiven: ${v['administered_date']}' : ''}'),
+              trailing: status == 'administered' ? Text('GIVEN', style: TextStyle(color: colour, fontWeight: FontWeight.bold, fontSize: 12))
+                  : OutlinedButton(onPressed: () => _markAdministered(v['uuid']), child: const Text('Mark Given')),
+            ));
           },
         );
       },
@@ -617,6 +429,69 @@ class _ImmunisationTabState extends State<_ImmunisationTab> {
   }
 }
 
+// ── Tab 7: Milestones ────────────────────────────────────────────────────
+class _MilestonesTab extends StatefulWidget {
+  final Map<String, dynamic> child;
+  const _MilestonesTab({required this.child});
+  @override State<_MilestonesTab> createState() => _MilestonesTabState();
+}
+class _MilestonesTabState extends State<_MilestonesTab> {
+  Future<void> _toggleMilestone(String uuid, int achieved) async {
+    await DatabaseHelper.instance.update('milestones', 
+      {'achieved': achieved, 'assessed_at': DateTime.now().toIso8601String().substring(0, 10), 'synced_at': null},
+      where: 'uuid = ?', whereArgs: [uuid]);
+    setState(() {});
+  }
+
+  @override Widget build(BuildContext context) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: DatabaseHelper.instance.query('milestones', where: 'child_uuid = ?', whereArgs: [widget.child['uuid']], orderBy: 'age_band ASC'),
+      builder: (ctx, snap) {
+        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        final rows = snap.data!;
+        
+        if (rows.isEmpty) {
+          return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.child_care, size: 48, color: Colors.purple.shade200),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () async {
+                final bands = {'0-6m': 'Social smile, Head control', '6-12m': 'Sitting, Crawling', '12-24m': 'Walking, First words'};
+                final now = DateTime.now().toIso8601String().substring(0, 10);
+                for (final band in bands.entries) {
+                  await DatabaseHelper.instance.insert('milestones', {
+                    'uuid': const Uuid().v4(), 'child_uuid': widget.child['uuid'],
+                    'age_band': band.key, 'milestone_item': band.value, 'achieved': 0,
+                    'assessed_at': now, 'assessed_by': 'local_user'
+                  });
+                }
+                setState(() {});
+              },
+              icon: const Icon(Icons.add), label: const Text('Initialize Milestones'),
+            )
+          ]));
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: rows.length,
+          itemBuilder: (_, i) {
+            final m = rows[i];
+            final achieved = (m['achieved'] as int?) == 1;
+            return Card(margin: const EdgeInsets.only(bottom: 10), child: CheckboxListTile(
+              title: Text('[${m['age_band']}] ${m['milestone_item']}'),
+              subtitle: Text('Assessed: ${m['assessed_at']}'),
+              value: achieved,
+              onChanged: (val) => _toggleMilestone(m['uuid'], val == true ? 1 : 0),
+            ));
+          },
+        );
+      },
+    );
+  }
+}
+
+// ── Tab 8: Notes ─────────────────────────────────────────────────────────
 class _NotesTab extends StatefulWidget {
   final Map<String, dynamic> child;
   const _NotesTab({required this.child});
@@ -633,34 +508,12 @@ class _NotesTabState extends State<_NotesTab> {
     child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       const Text('Caregiver Notes', style: TextStyle(fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
-      Expanded(child: TextField(controller: _ctrl, maxLines: null, expands: true,
-          textAlignVertical: TextAlignVertical.top,
-          decoration: const InputDecoration(hintText: 'Add any observations here…', border: OutlineInputBorder()))),
+      Expanded(child: TextField(controller: _ctrl, maxLines: null, expands: true, textAlignVertical: TextAlignVertical.top, decoration: const InputDecoration(hintText: 'Add any observations here…', border: OutlineInputBorder()))),
       const SizedBox(height: 8),
       FilledButton(onPressed: () async {
-        final auth = context.read<AuthService>();
-        final sync = context.read<SyncService>();
-        final messenger = ScaffoldMessenger.of(context);
-
-        await DatabaseHelper.instance.update('children', {'notes': _ctrl.text},
-            where: 'uuid = ?', whereArgs: [widget.child['uuid']]);
-
-        // Queue notes update for server sync (works online or later).
-        await sync.enqueue(
-          entityType: 'child',
-          entityUuid: (widget.child['uuid'] ?? '').toString(),
-          operation: 'update',
-          payload: {
-            'notes': _ctrl.text,
-            // centre_id omitted intentionally; backend keeps existing centre_id for updates.
-          },
-        );
-        await sync.syncIfConnected(auth: auth);
-
+        await DatabaseHelper.instance.update('children', {'notes': _ctrl.text}, where: 'uuid = ?', whereArgs: [widget.child['uuid']]);
         if (!mounted) return;
-        messenger.showSnackBar(
-          const SnackBar(content: Text('Notes saved'), backgroundColor: Colors.green),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notes saved'), backgroundColor: Colors.green));
       }, child: const Text('Save Notes')),
     ]),
   );
