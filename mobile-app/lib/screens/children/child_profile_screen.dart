@@ -539,56 +539,75 @@ class _AlertsTab extends StatelessWidget {
   }
 }
 
-class _ImmunisationTab extends StatelessWidget {
+class _ImmunisationTab extends StatefulWidget {
   final Map<String, dynamic> child;
   const _ImmunisationTab({required this.child});
+  @override State<_ImmunisationTab> createState() => _ImmunisationTabState();
+}
+
+class _ImmunisationTabState extends State<_ImmunisationTab> {
+  Future<void> _markAdministered(String uuid) async {
+    await DatabaseHelper.instance.update('immunisation', 
+      {'status': 'administered', 'administered_date': DateTime.now().toIso8601String().substring(0, 10), 'synced_at': null},
+      where: 'uuid = ?', whereArgs: [uuid]);
+    setState(() {}); // Refresh tab
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Minimal offline view: show immunisation rows from local DB if present.
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: DatabaseHelper.instance.query(
-        'immunisation',
-        where: 'child_uuid = ?',
-        whereArgs: [child['uuid']],
-        orderBy: 'scheduled_date ASC',
-      ),
+      future: DatabaseHelper.instance.query('immunisation', where: 'child_uuid = ?', whereArgs: [widget.child['uuid']], orderBy: 'scheduled_date ASC'),
       builder: (ctx, snap) {
         if (!snap.hasData) return const Center(child: CircularProgressIndicator());
         final rows = snap.data!;
+        
         if (rows.isEmpty) {
-          return const Center(
+          return Center(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.vaccines, size: 48, color: Colors.teal),
-              SizedBox(height: 8),
-              Text('No immunisation records yet.'),
+              Icon(Icons.vaccines, size: 48, color: Colors.teal.shade200),
+              const SizedBox(height: 16),
+              const Text('No immunisation records yet.'),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () async {
+                  // Generate default EPI schedule for child
+                  final vaccines = ['BCG, OPV0', 'Polio 1, DTP 1', 'Measles 1'];
+                  for (int i=0; i<vaccines.length; i++) {
+                    await DatabaseHelper.instance.insert('immunisation', {
+                      'uuid': const Uuid().v4(), 'child_uuid': widget.child['uuid'],
+                      'vaccine_name': vaccines[i], 'status': 'due',
+                      'scheduled_date': DateTime.now().add(Duration(days: 30 * i)).toIso8601String().substring(0, 10)
+                    });
+                  }
+                  setState(() {});
+                },
+                icon: const Icon(Icons.add), label: const Text('Initialize EPI Schedule'),
+              )
             ]),
           );
         }
+        
         return ListView.builder(
           padding: const EdgeInsets.all(12),
           itemCount: rows.length,
           itemBuilder: (_, i) {
             final v = rows[i];
             final status = (v['status'] as String?) ?? 'due';
-            final colour = status == 'administered'
-                ? Colors.green
-                : status == 'overdue'
-                    ? Colors.red
-                    : Colors.orange;
+            final colour = status == 'administered' ? Colors.green : (status == 'overdue' ? Colors.red : Colors.orange);
+            
             return Card(
               margin: const EdgeInsets.only(bottom: 10),
               child: ListTile(
                 leading: Icon(Icons.vaccines, color: colour),
                 title: Text(v['vaccine_name'] as String? ?? ''),
-                subtitle: Text(
-                  'Scheduled: ${v['scheduled_date'] ?? '—'}'
-                  '${(v['administered_date'] as String?)?.isNotEmpty == true ? '\nGiven: ${v['administered_date']}' : ''}',
-                ),
-                trailing: Text(status.toUpperCase(),
-                    style: TextStyle(
-                        color: colour,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11)),
+                subtitle: Text('Scheduled: ${v['scheduled_date'] ?? '—'}'
+                  '${(v['administered_date'] as String?)?.isNotEmpty == true ? '\nGiven: ${v['administered_date']}' : ''}'),
+                trailing: status == 'administered' 
+                  ? Text('GIVEN', style: TextStyle(color: colour, fontWeight: FontWeight.bold, fontSize: 12))
+                  : OutlinedButton(
+                      onPressed: () => _markAdministered(v['uuid']),
+                      child: const Text('Mark Given'),
+                    ),
               ),
             );
           },

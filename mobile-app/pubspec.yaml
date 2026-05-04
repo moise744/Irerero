@@ -61,6 +61,7 @@ dependencies:
   flutter_local_notifications: ^17.2.1+2
   sqflite_sqlcipher: ^3.4.0
   sqlcipher_flutter_libs: ^0.7.0+eol
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

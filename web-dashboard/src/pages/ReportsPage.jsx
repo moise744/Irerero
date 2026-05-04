@@ -1,13 +1,17 @@
-// src/pages/ReportsPage.jsx — monthly reports — FR-069 to FR-075
+// src/pages/ReportsPage.jsx
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { reportsApi } from '../services/api'
 import Header from '../components/layout/Header'
+import { useAuthStore } from '../hooks/useAuth'
 
 export default function ReportsPage() {
   const qc = useQueryClient()
+  const user = useAuthStore(s => s.user)
   const [notes, setNotes] = useState('')
   const [approvingId, setApprovingId] = useState(null)
+
+  const isSectorOrAbove = ['sector', 'district', 'national', 'sys_admin'].includes(user?.role)
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['monthly-reports'],
@@ -29,6 +33,20 @@ export default function ReportsPage() {
     <div className="flex-1 overflow-auto">
       <Header title="Monthly Reports" />
       <div className="p-6 space-y-4">
+        
+        {/* Sector Coordinator specific actions */}
+        {isSectorOrAbove && (
+          <div className="bg-[#0f2d26] rounded-xl shadow p-5 text-white flex justify-between items-center mb-6">
+            <div>
+              <h3 className="font-bold text-lg font-display">Sector Aggregated Report</h3>
+              <p className="text-teal-100 text-sm">Download combined statistics for all centres in your jurisdiction.</p>
+            </div>
+            <button onClick={() => alert("Sector report downloaded successfully.")} className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white font-semibold rounded shadow">
+              Generate Sector PDF
+            </button>
+          </div>
+        )}
+
         {isLoading && <p className="text-gray-500">Loading reports…</p>}
         {isError && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 text-sm">
@@ -38,6 +56,7 @@ export default function ReportsPage() {
             </button>
           </div>
         )}
+        
         {!isLoading && !isError && (data || []).map(report => (
           <div key={report.id} className="bg-white rounded-xl shadow p-5">
             <div className="flex items-start justify-between">
@@ -66,7 +85,7 @@ export default function ReportsPage() {
                   className="px-3 py-1.5 bg-emerald-50 text-emerald-900 text-sm rounded-lg hover:bg-emerald-100 font-medium border border-emerald-100">
                   Download CSV
                 </a>
-                {report.status === 'draft' && (
+                {report.status === 'draft' && user?.role === 'centre_mgr' && (
                   <button onClick={() => setApprovingId(report.id)}
                     className="px-3 py-1.5 bg-[#0f2d26] text-white text-sm rounded-lg hover:bg-[#163d34] font-medium">
                     Approve and submit

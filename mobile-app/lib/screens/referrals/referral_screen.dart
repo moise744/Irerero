@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../db/database_helper.dart';
@@ -38,8 +39,7 @@ class _ReferralScreenState extends State<ReferralScreen>
     if (!mounted) return;
     setState(() {
       _pending = all.where((r) => r['status'] == 'pending').toList();
-      _completed =
-          all.where((r) => r['status'] != 'pending').toList();
+      _completed = all.where((r) => r['status'] != 'pending').toList();
       _loading = false;
     });
   }
@@ -121,8 +121,8 @@ class _ReferralScreenState extends State<ReferralScreen>
   }
 
   Future<void> _showNewReferralDialog(BuildContext context) async {
-    final children =
-        await DatabaseHelper.instance.query('children', orderBy: 'full_name ASC');
+    final children = await DatabaseHelper.instance
+        .query('children', orderBy: 'full_name ASC');
 
     if (!context.mounted) return;
 
@@ -141,7 +141,8 @@ class _ReferralScreenState extends State<ReferralScreen>
     }
   }
 
-  Future<void> _showOutcomeDialog(BuildContext context, Map<String, dynamic> referral) async {
+  Future<void> _showOutcomeDialog(
+      BuildContext context, Map<String, dynamic> referral) async {
     final saved = await showDialog<bool>(
           context: context,
           builder: (ctx) => _OutcomeDialog(referral: referral),
@@ -230,7 +231,8 @@ class _NewReferralSheetState extends State<_NewReferralSheet> {
                   : () async {
                       setState(() => _saving = true);
                       final uuid = const Uuid().v4();
-                      final date = DateTime.now().toIso8601String().substring(0, 10);
+                      final date =
+                          DateTime.now().toIso8601String().substring(0, 10);
                       final now = DateTime.now().toIso8601String();
                       final auth = context.read<AuthService>();
                       final sync = context.read<SyncService>();
@@ -331,7 +333,8 @@ class _OutcomeDialogState extends State<_OutcomeDialog> {
                       'status': 'treatment_given',
                       'diagnosis': _diagCtrl.text,
                       'treatment': _treatCtrl.text,
-                      'outcome_date': DateTime.now().toIso8601String().substring(0, 10),
+                      'outcome_date':
+                          DateTime.now().toIso8601String().substring(0, 10),
                       'synced_at': null,
                     },
                     where: 'uuid = ?',
@@ -351,6 +354,28 @@ class _ReferralCard extends StatelessWidget {
   final VoidCallback? onRecordOutcome;
 
   const _ReferralCard({required this.referral, this.onRecordOutcome});
+
+  Future<void> _downloadPdf(BuildContext context) async {
+    final String baseUrl = const String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'http://10.0.2.2:8000/api/v1',
+    );
+    final String pdfUrl =
+        '${baseUrl.replaceAll('/api/v1', '')}/media/pdfs/referral_${referral['uuid']}.pdf';
+
+    final Uri url = Uri.parse(pdfUrl);
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Could not open PDF. Please ensure backend is running.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -390,9 +415,10 @@ class _ReferralCard extends StatelessWidget {
                   child: Text(
                     status.replaceAll('_', ' '),
                     style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: statusColor),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
                   ),
                 ),
               ],
@@ -405,7 +431,8 @@ class _ReferralCard extends StatelessWidget {
               'Date: ${referral['referral_date'] ?? ''}',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
-            if (referral['diagnosis'] != null) ...[
+            if (referral['diagnosis'] != null &&
+                referral['diagnosis'].toString().isNotEmpty) ...[
               const Divider(),
               Text('Diagnosis: ${referral['diagnosis']}',
                   style: const TextStyle(fontSize: 13)),
@@ -413,17 +440,27 @@ class _ReferralCard extends StatelessWidget {
                 Text('Treatment: ${referral['treatment']}',
                     style: const TextStyle(fontSize: 13)),
             ],
-            if (onRecordOutcome != null) ...[
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.edit_note, size: 18),
-                  label: const Text('Record Outcome'),
-                  onPressed: onRecordOutcome,
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.picture_as_pdf,
+                      size: 18, color: Colors.red),
+                  label: const Text('Download PDF',
+                      style: TextStyle(color: Colors.red)),
+                  onPressed: () => _downloadPdf(context),
                 ),
-              ),
-            ],
+                if (onRecordOutcome != null) ...[
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    icon: const Icon(Icons.edit_note, size: 18),
+                    label: const Text('Outcome'),
+                    onPressed: onRecordOutcome,
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
