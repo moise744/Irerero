@@ -15,22 +15,23 @@ class _NutritionScreenState extends State<NutritionScreen>
   late TabController _tabCtrl;
   List<Map<String, dynamic>> _enrolments = [];
   List<Map<String, dynamic>> _meals = [];
+  List<Map<String, dynamic>> _intakeFlags = [];
   final Map<String, String> _childNameByUuid = {};
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 2, vsync: this);
+    _tabCtrl = TabController(length: 3, vsync: this);
     _loadData();
   }
 
   Future<void> _loadData() async {
     final db = DatabaseHelper.instance;
     try {
-      final enrolments = await db.query('nutrition_programmes',
-          orderBy: 'enrolment_date DESC');
+      final enrolments = await db.query('nutrition_programmes', orderBy: 'enrolment_date DESC');
       final meals = await db.query('meal_records', orderBy: 'date DESC');
+      final intakeFlags = await db.query('food_intake_flags', orderBy: 'recorded_at DESC');
 
       _childNameByUuid.clear();
       final children = await db.query('children', orderBy: 'full_name ASC');
@@ -44,6 +45,7 @@ class _NutritionScreenState extends State<NutritionScreen>
       setState(() {
         _enrolments = enrolments;
         _meals = meals;
+        _intakeFlags = intakeFlags;
         _loading = false;
       });
     } catch (_) {
@@ -65,9 +67,11 @@ class _NutritionScreenState extends State<NutritionScreen>
         title: const Text('Nutrition Programme'),
         bottom: TabBar(
           controller: _tabCtrl,
+          isScrollable: true,
           tabs: const [
             Tab(icon: Icon(Icons.person_add), text: 'Enrolments'),
             Tab(icon: Icon(Icons.restaurant), text: 'Meals'),
+            Tab(icon: Icon(Icons.warning_amber), text: 'Poor Intake'),
           ],
         ),
       ),
@@ -78,6 +82,7 @@ class _NutritionScreenState extends State<NutritionScreen>
               children: [
                 _buildEnrolmentsTab(),
                 _buildMealsTab(),
+                _buildIntakeFlagsTab(),
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(
@@ -96,6 +101,11 @@ class _NutritionScreenState extends State<NutritionScreen>
                 title: const Text('Enrol Child in Programme'),
                 onTap: () { Navigator.pop(ctx); _showEnrolmentDialog(context); },
               ),
+              ListTile(
+                leading: const Icon(Icons.warning_amber, color: Colors.orange),
+                title: const Text('Flag Poor Food Intake'),
+                onTap: () { Navigator.pop(ctx); _showPoorIntakeDialog(context); },
+              ),
             ]),
           ));
         },
@@ -104,23 +114,7 @@ class _NutritionScreenState extends State<NutritionScreen>
   }
 
   Widget _buildEnrolmentsTab() {
-    if (_enrolments.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.no_food, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text('No nutrition programme enrolments',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
-            const SizedBox(height: 8),
-            Text('Children with SAM/MAM are auto-enrolled',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
-          ],
-        ),
-      );
-    }
-
+    if (_enrolments.isEmpty) return const Center(child: Text('No nutrition programme enrolments'));
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView.builder(
@@ -133,53 +127,10 @@ class _NutritionScreenState extends State<NutritionScreen>
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: colour.withOpacity(0.15),
-                child: Icon(
-                  type == 'tfp'
-                      ? Icons.medical_services
-                      : Icons.food_bank,
-                  color: colour,
-                ),
-              ),
+              leading: CircleAvatar(backgroundColor: colour.withOpacity(0.15), child: Icon(Icons.medical_services, color: colour)),
               title: Text(_childNameByUuid[(e['child_uuid'] as String?) ?? ''] ?? 'Child'),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    type == 'tfp'
-                        ? 'Therapeutic Feeding Programme'
-                        : 'Supplementary Feeding Programme',
-                    style: TextStyle(fontSize: 12, color: colour),
-                  ),
-                  Text(
-                    'Enrolled: ${e['enrolment_date'] ?? '—'}',
-                    style:
-                        TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-              trailing: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: (e['outcome'] == 'recovered'
-                          ? Colors.green
-                          : Colors.orange)
-                      .withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  e['outcome'] ?? 'active',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: e['outcome'] == 'recovered'
-                        ? Colors.green
-                        : Colors.orange,
-                  ),
-                ),
-              ),
+              subtitle: Text('${type.toString().toUpperCase()} - Enrolled: ${e['enrolment_date']}'),
+              trailing: Text(e['outcome'] ?? 'active', style: TextStyle(fontWeight: FontWeight.bold, color: colour)),
             ),
           );
         },
@@ -188,20 +139,7 @@ class _NutritionScreenState extends State<NutritionScreen>
   }
 
   Widget _buildMealsTab() {
-    if (_meals.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.restaurant, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text('No meals recorded',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
-          ],
-        ),
-      );
-    }
-
+    if (_meals.isEmpty) return const Center(child: Text('No meals recorded'));
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView.builder(
@@ -211,32 +149,34 @@ class _NutritionScreenState extends State<NutritionScreen>
           final m = _meals[i];
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.restaurant_menu,
-                          color: Colors.teal),
-                      const SizedBox(width: 8),
-                      Text(m['date'] ?? '',
-                          style: Theme.of(context).textTheme.titleMedium),
-                      const Spacer(),
-                      Chip(
-                        label: Text(
-                          '${m['children_fed_count'] ?? 0} children fed',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(m['menu_description'] ?? 'No description',
-                      style: const TextStyle(color: Colors.black87)),
-                ],
-              ),
+            child: ListTile(
+              leading: const Icon(Icons.restaurant_menu, color: Colors.teal),
+              title: Text(m['date'] ?? ''),
+              subtitle: Text(m['menu_description'] ?? 'No description'),
+              trailing: Chip(label: Text('${m['children_fed_count'] ?? 0} fed')),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildIntakeFlagsTab() {
+    if (_intakeFlags.isEmpty) return const Center(child: Text('No poor intake flags recorded'));
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _intakeFlags.length,
+        itemBuilder: (ctx, i) {
+          final f = _intakeFlags[i];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.warning, color: Colors.orange),
+              title: Text(_childNameByUuid[(f['child_uuid'] as String?) ?? ''] ?? 'Child'),
+              subtitle: Text('Notes: ${f['notes'] ?? 'None'}'),
+              trailing: const Text('POOR INTAKE', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 10)),
             ),
           );
         },
@@ -272,6 +212,7 @@ class _NutritionScreenState extends State<NutritionScreen>
         ]);
       }),
       actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
         FilledButton(onPressed: () async {
           if (selectedChild == null) return;
           await DatabaseHelper.instance.insert('nutrition_programmes', {
@@ -290,103 +231,72 @@ class _NutritionScreenState extends State<NutritionScreen>
   }
 
   Future<void> _showRecordMealDialog(BuildContext context) async {
-    final saved = await showModalBottomSheet<bool>(
-          context: context,
-          isScrollControlled: true,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    final menuCtrl = TextEditingController();
+    final countCtrl = TextEditingController();
+    await showDialog(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('Record Meal'),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: menuCtrl, decoration: const InputDecoration(labelText: 'Menu Description (e.g. Porridge)')),
+        TextField(controller: countCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Children Fed Count')),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        FilledButton(onPressed: () async {
+          await DatabaseHelper.instance.insert('meal_records', {
+            'uuid': const Uuid().v4(),
+            'centre_code': 'LOCAL',
+            'date': DateTime.now().toIso8601String().substring(0, 10),
+            'menu_description': menuCtrl.text,
+            'children_fed_count': int.tryParse(countCtrl.text) ?? 0,
+            'recorded_by': 'local_user',
+          });
+          Navigator.pop(ctx);
+          _loadData();
+        }, child: const Text('Save'))
+      ],
+    ));
+  }
+
+  Future<void> _showPoorIntakeDialog(BuildContext context) async {
+    final children = await DatabaseHelper.instance.query('children');
+    String? selectedChild;
+    final notesCtrl = TextEditingController();
+
+    if (!context.mounted) return;
+    await showDialog(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('Flag Poor Food Intake'),
+      content: StatefulBuilder(builder: (ctx, setDialogState) {
+        return Column(mainAxisSize: MainAxisSize.min, children: [
+          DropdownButtonFormField<String>(
+            hint: const Text('Select Child'),
+            items: children.map((c) => DropdownMenuItem(value: c['uuid'].toString(), child: Text(c['full_name'].toString()))).toList(),
+            onChanged: (v) => setDialogState(() => selectedChild = v),
           ),
-          builder: (ctx) => const _RecordMealSheet(),
-        ) ??
-        false;
-
-    if (saved && mounted) {
-      _loadData();
-    }
-  }
-}
-
-class _RecordMealSheet extends StatefulWidget {
-  const _RecordMealSheet();
-
-  @override
-  State<_RecordMealSheet> createState() => _RecordMealSheetState();
-}
-
-class _RecordMealSheetState extends State<_RecordMealSheet> {
-  late final TextEditingController _menuCtrl;
-  late final TextEditingController _countCtrl;
-  bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _menuCtrl = TextEditingController();
-    _countCtrl = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _menuCtrl.dispose();
-    _countCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Record Meal', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           TextField(
-            controller: _menuCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Menu Description',
-              hintText: 'e.g. Porridge, beans, banana',
-            ),
+            controller: notesCtrl,
+            decoration: const InputDecoration(labelText: 'Notes (Optional)'),
             maxLines: 2,
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _countCtrl,
-            decoration: const InputDecoration(labelText: 'Children Fed'),
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _saving
-                  ? null
-                  : () async {
-                      setState(() => _saving = true);
-                      await DatabaseHelper.instance.insert('meal_records', {
-                        'uuid': const Uuid().v4(),
-                        'centre_code': '',
-                        'date': DateTime.now().toIso8601String().substring(0, 10),
-                        'menu_description': _menuCtrl.text,
-                        'children_fed_count': int.tryParse(_countCtrl.text) ?? 0,
-                        'recorded_by': '',
-                        'synced_at': null,
-                      });
-                      if (context.mounted) {
-                        Navigator.pop(context, true);
-                      }
-                    },
-              child: Text(_saving ? 'Saving…' : 'Save Meal'),
-            ),
-          ),
-        ],
-      ),
-    );
+        ]);
+      }),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        FilledButton(onPressed: () async {
+          if (selectedChild == null) return;
+          await DatabaseHelper.instance.insert('food_intake_flags', {
+            'uuid': const Uuid().v4(),
+            'child_uuid': selectedChild,
+            'meal_uuid': 'unspecified', // In a full app, link to specific meal
+            'poor_intake': 1,
+            'notes': notesCtrl.text,
+            'recorded_by': 'local_user',
+            'recorded_at': DateTime.now().toIso8601String(),
+          });
+          Navigator.pop(ctx);
+          _loadData();
+        }, child: const Text('Save Flag'))
+      ],
+    ));
   }
 }
