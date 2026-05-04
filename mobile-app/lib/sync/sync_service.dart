@@ -16,8 +16,9 @@ import '../services/auth_service.dart';
 enum SyncStatus { idle, syncing, synced, error }
 
 class SyncService extends ChangeNotifier {
+  // FIXED: Using 127.0.0.1 for physical phone USB debugging (Requires adb reverse)
   static const String _baseUrl = String.fromEnvironment(
-    'API_BASE_URL', defaultValue: 'http://10.0.2.2:8000/api/v1',
+    'API_BASE_URL', defaultValue: 'http://127.0.0.1:8000/api/v1',
   );
 
   SyncStatus _status     = SyncStatus.idle;
@@ -29,15 +30,14 @@ class SyncService extends ChangeNotifier {
   DateTime?  get lastSyncAt  => _lastSyncAt;
   int        get pendingCount => _pendingCount;
   bool       get isSyncing   => _status == SyncStatus.syncing;
+  String?    get lastError   => _lastError;
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
-  /// Starts the connectivity monitor — syncs automatically when online.
   void startMonitor(AuthService auth) {
     _connectivitySub?.cancel();
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
-      final online =
-          results.any((r) => r != ConnectivityResult.none);
+      final online = results.any((r) => r != ConnectivityResult.none);
       if (online && auth.isLoggedIn) {
         syncIfConnected(auth: auth);
       }
@@ -47,14 +47,11 @@ class SyncService extends ChangeNotifier {
 
   Future<void> syncIfConnected({AuthService? auth}) async {
     final connectivity = await Connectivity().checkConnectivity();
-    final online =
-        connectivity.any((r) => r != ConnectivityResult.none);
+    final online = connectivity.any((r) => r != ConnectivityResult.none);
     if (!online) return;
     if (auth != null) await sync(auth);
   }
 
-  /// Downloads children visible to this user from the server into local SQLite.
-  /// Pagination URLs from Django may use localhost; they are rewritten to match [_baseUrl].
   Future<void> pullChildrenFromServer(AuthService auth) async {
     if (!auth.isLoggedIn || auth.accessToken == null) return;
     try {
@@ -112,8 +109,8 @@ class SyncService extends ChangeNotifier {
       }
       await _refreshPendingCount();
       notifyListeners();
-    } catch (_) {
-      /* offline or error — keep local data */
+    } catch (e) {
+      print('PULL ERROR: $e');
     }
   }
 
@@ -129,7 +126,6 @@ class SyncService extends ChangeNotifier {
     super.dispose();
   }
 
-  /// Main sync function — uploads pending queue to server.
   Future<Map<String, dynamic>> sync(AuthService auth) async {
     if (_status == SyncStatus.syncing) return {'skipped': true};
 
@@ -137,7 +133,6 @@ class SyncService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Read pending records from sync_queue
       final pending = await DatabaseHelper.instance.query(
         'sync_queue',
         where: 'status = ?',
@@ -163,21 +158,25 @@ class SyncService extends ChangeNotifier {
         };
       }).toList();
 
+      // FIXED: Added Content-Type so Django understands the JSON payload
       final res = await http.post(
         Uri.parse('$_baseUrl/sync/'),
-        headers: auth.authHeaders,
+        headers: {
+          ...auth.authHeaders,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         body: jsonEncode({
           'records':   records,
           'device_id': 'irerero-mobile-${auth.userId ?? "unknown"}',
         }),
-      ).timeout(const Duration(minutes: 3));
+      ).timeout(const Duration(seconds: 30));
 
       if (res.statusCode == 200) {
         final data     = jsonDecode(res.body) as Map<String, dynamic>;
         final accepted = List<String>.from(data['accepted'] ?? []);
         final conflicts= List<dynamic>.from(data['conflicts'] ?? []);
 
-        // Mark accepted records as synced — FR-088 (partial sync safe)
         for (final uuid in accepted) {
           await DatabaseHelper.instance.update(
             'sync_queue',
@@ -187,7 +186,6 @@ class SyncService extends ChangeNotifier {
           );
         }
 
-        // Store server-generated alerts locally
         final serverAlerts = data['server_alerts'] as List? ?? [];
         for (final alert in serverAlerts) {
           await _storeServerAlert(alert as Map<String, dynamic>);
@@ -196,12 +194,16 @@ class SyncService extends ChangeNotifier {
         _lastSyncAt   = DateTime.now();
         _pendingCount = await _getPendingCount();
         _status       = SyncStatus.synced;
+        _lastError    = null;
         notifyListeners();
         return {'accepted': accepted, 'conflicts': conflicts};
       }
 
-      throw Exception('Server returned ${res.statusCode}');
+      throw Exception('Server returned ${res.statusCode}: ${res.body}');
     } catch (e) {
+      print('================ SYNC ERROR ================');
+      print(e.toString());
+      print('============================================');
       _lastError = e.toString();
       _status    = SyncStatus.error;
       notifyListeners();
@@ -209,7 +211,6 @@ class SyncService extends ChangeNotifier {
     }
   }
 
-  /// Add a record to the sync queue — called after every local write.
   Future<void> enqueue({
     required String entityType,
     required String entityUuid,
@@ -258,7 +259,6 @@ class SyncService extends ChangeNotifier {
   }
 
   String _generateUuid() {
-    // Simple UUID v4 generation
     final now = DateTime.now().millisecondsSinceEpoch;
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAllMapped(
       RegExp(r'[xy]'),

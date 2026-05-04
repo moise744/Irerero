@@ -36,14 +36,13 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
   final _headCtrl   = TextEditingController();
   String _position  = 'standing';
 
-  // Track which fields came from device (shown in blue) — ES-FR-004
   final Set<String> _fromDevice = {};
 
   ZScoreResult? _result;
   bool _saving   = false;
   bool _bivWarn  = false;
   String? _tempAlertMsg;
-  String? _trendArrow; // PUD §6.2 trend arrow
+  String? _trendArrow; 
 
   DeviceInterface? _device;
   StreamSubscription<MeasurementPayload>? _deviceSub;
@@ -63,8 +62,6 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
   }
 
   void _onDevicePayload(MeasurementPayload p) {
-    // Safety: only accept device payloads intended for THIS child.
-    // Simulator sends child_id as Irerero ID (e.g., GIT-2025-0001). In future devices may send UUID.
     final expectedIrereroId = (widget.child['irerero_id'] as String? ?? '').trim();
     final expectedUuid      = (widget.child['uuid'] as String? ?? '').trim();
     final incoming          = p.childId.trim();
@@ -84,7 +81,6 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
       return;
     }
 
-    // Pre-fill form from device — ES-FR-003, ES-FR-004
     setState(() {
       if (p.weightKg != null) { _weightCtrl.text = p.weightKg!.toStringAsFixed(1); _fromDevice.add('weight'); }
       if (p.heightCm != null) { _heightCtrl.text = p.heightCm!.toStringAsFixed(1); _fromDevice.add('height'); }
@@ -93,7 +89,6 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
       if (p.headCircumferenceCm != null) { _headCtrl.text = p.headCircumferenceCm!.toStringAsFixed(1); _fromDevice.add('head'); }
       _position = p.measurementPosition;
     });
-    // BIV + Z-score preview after device fills — ES-FR-007
     _computePreview();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('✓ Values received from device — please confirm'), backgroundColor: Colors.blue, duration: Duration(seconds: 3)),
@@ -116,7 +111,6 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
       ageMonths: ageMonths, sex: child['sex'] as String? ?? 'male',
     );
 
-    // Temperature alert check — PUD §3.4
     String? tempAlert;
     if (t != null) {
       if (t < 36.0) tempAlert = '⚠ Hypothermia risk — temperature below 36°C. Wrap child warmly and seek urgent care.';
@@ -127,10 +121,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
   }
 
   Future<void> _save() async {
-    // DESIGN PRINCIPLE (SRS §6.1): caregiver MUST confirm — NEVER auto-save embedded data
     if (_result == null) { await _computePreview(); if (_result == null) return; }
-
-    // Show BIV warning — require explicit confirmation
     if (_bivWarn && !await _confirmBiv()) return;
 
     setState(() => _saving = true);
@@ -140,7 +131,6 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
     final uuid  = const Uuid().v4();
     final now   = DateTime.now().toIso8601String();
 
-    // Trend arrow calculation — PUD §6.2
     await _computeTrendArrow();
 
     final record = {
@@ -195,7 +185,6 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
   }
 
   Future<void> _computeTrendArrow() async {
-    // PUD §6.2: trend arrow comparing to previous measurement
     final prev = await DatabaseHelper.instance.query('measurements',
         where: 'child_uuid = ? AND biv_flagged = 0',
         whereArgs: [widget.child['uuid']],
@@ -255,15 +244,16 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-          // Device connection status
           Row(children: [
             Icon(_deviceConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
                 color: _deviceConnected ? Colors.blue : Colors.grey),
             const SizedBox(width: 8),
-            Text(_deviceConnected
-                ? 'Local listener on port 8765 (optional hardware / integrations)'
-                : 'Manual entry — device listener unavailable',
-                style: const TextStyle(fontSize: 12)),
+            Expanded(
+              child: Text(_deviceConnected
+                  ? 'Local listener on port 8765 (optional hardware / integrations)'
+                  : 'Manual entry — device listener unavailable',
+                  style: const TextStyle(fontSize: 12)),
+            ),
           ]),
           const SizedBox(height: 12),
 
@@ -274,11 +264,12 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
               child: const Row(children: [
                 Icon(Icons.bluetooth, color: Colors.blue, size: 16),
                 SizedBox(width: 8),
-                Text('Blue fields were received from device', style: TextStyle(color: Colors.blue, fontSize: 12)),
+                Expanded(
+                  child: Text('Blue fields were received from device', style: TextStyle(color: Colors.blue, fontSize: 12)),
+                ),
               ])),
           const SizedBox(height: 16),
 
-          // Measurement fields — ES-FR-004 (blue highlighting)
           Row(children: [
             Expanded(child: TextField(controller: _weightCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 onChanged: (_) => _computePreview(),
@@ -292,29 +283,32 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
           Row(children: [
             Expanded(child: TextField(controller: _muacCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 onChanged: (_) => _computePreview(),
-                decoration: InputDecoration(labelText: 'MUAC (cm)', border: _fieldBorder('muac'), filled: true, fillColor: _fieldColor('muac')))),
-            const SizedBox(width: 10),
+                decoration: InputDecoration(labelText: 'MUAC', border: _fieldBorder('muac'), filled: true, fillColor: _fieldColor('muac')))),
+            const SizedBox(width: 8),
             Expanded(child: TextField(controller: _tempCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 onChanged: (_) => _computePreview(),
-                decoration: InputDecoration(labelText: 'Temp (°C)', border: _fieldBorder('temp'), filled: true, fillColor: _fieldColor('temp')))),
-            const SizedBox(width: 10),
+                decoration: InputDecoration(labelText: 'Temp', border: _fieldBorder('temp'), filled: true, fillColor: _fieldColor('temp')))),
+            const SizedBox(width: 8),
             Expanded(child: TextField(controller: _headCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 onChanged: (_) => _computePreview(),
-                decoration: InputDecoration(labelText: 'Head (cm)', border: _fieldBorder('head'), filled: true, fillColor: _fieldColor('head')))),
+                decoration: InputDecoration(labelText: 'Head', border: _fieldBorder('head'), filled: true, fillColor: _fieldColor('head')))),
           ]),
           const SizedBox(height: 12),
 
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'lying',    icon: Icon(Icons.bed),              label: Text('Aryamye (<2y)')),
-              ButtonSegment(value: 'standing', icon: Icon(Icons.accessibility_new), label: Text('Ahagarare')),
-            ],
-            selected: {_position},
-            onSelectionChanged: (v) => setState(() => _position = v.first),
+          // FIXED: Wrapped the SegmentedButton in a FittedBox to prevent the 47-pixel overflow
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'lying',    icon: Icon(Icons.bed),              label: Text('Aryamye')),
+                ButtonSegment(value: 'standing', icon: Icon(Icons.accessibility_new), label: Text('Ahagarare')),
+              ],
+              selected: {_position},
+              onSelectionChanged: (v) => setState(() => _position = v.first),
+            ),
           ),
           const SizedBox(height: 16),
 
-          // Live preview — status badge shown immediately after input
           if (_result != null) ...[
             StatusBadge(status: _result!.nutritionalStatus),
             const SizedBox(height: 8),
@@ -328,7 +322,6 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
             const SizedBox(height: 8),
           ],
 
-          // CONFIRM button — SRS §6.1: NEVER auto-save embedded data
           SizedBox(height: 52,
             child: FilledButton.icon(
               onPressed: _saving ? null : _save,
