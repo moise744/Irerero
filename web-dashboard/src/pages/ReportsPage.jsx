@@ -24,25 +24,26 @@ export default function ReportsPage() {
   })
 
   const STATUS_BADGE = {
-    draft:     'bg-gray-100 text-gray-700',
-    approved:  'bg-blue-100 text-blue-700',
-    submitted: 'bg-green-100 text-green-700',
+    draft:     'bg-stone-100 text-stone-600',
+    approved:  'bg-blue-500/10 text-blue-700',
+    submitted: 'bg-brand-success/10 text-brand-success',
   }
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1 overflow-auto bg-canvas relative">
       <Header title="Monthly Reports" />
       <div className="p-6 space-y-4">
         
         {/* Sector Coordinator specific actions */}
         {isSectorOrAbove && (
-          <div className="bg-[#0f2d26] rounded-xl shadow p-5 text-white flex justify-between items-center mb-6">
-            <div>
-              <h3 className="font-bold text-lg font-display">Sector Aggregated Report</h3>
-              <p className="text-teal-100 text-sm">Download combined statistics for all centres in your jurisdiction.</p>
+          <div className="bg-primary rounded-2xl shadow-lg p-6 text-white flex justify-between items-center mb-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full filter blur-3xl opacity-50 pointer-events-none"></div>
+            <div className="relative z-10">
+              <h3 className="font-bold text-xl font-display tracking-tight">Sector Aggregated Report</h3>
+              <p className="text-white/80 text-sm mt-1">Download combined statistics for all centres in your jurisdiction.</p>
             </div>
             {/* Wired the button to the real API endpoint */}
-            <a href={reportsApi.sectorPdfUrl()} target="_blank" rel="noreferrer" className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white font-semibold rounded shadow">
+            <a href={reportsApi.sectorPdfUrl()} target="_blank" rel="noreferrer" className="relative z-10 px-5 py-2.5 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg shadow-md transition-all duration-300 hover:-translate-y-0.5">
               Generate Sector PDF
             </a>
           </div>
@@ -59,36 +60,36 @@ export default function ReportsPage() {
         )}
         
         {!isLoading && !isError && (data || []).map(report => (
-          <div key={report.id} className="bg-white rounded-xl shadow p-5">
+          <div key={report.id} className="card p-6">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-bold text-gray-800">
+                <h3 className="font-bold text-xl text-ink font-display tracking-tight">
                   {new Date(report.year, report.month-1).toLocaleString('default', {month:'long', year:'numeric'})} Report
                 </h3>
                 <div className="flex items-center gap-3 mt-2">
-                  <span className={`text-xs px-2 py-1 rounded-full font-semibold ${STATUS_BADGE[report.status]}`}>
-                    {report.status.toUpperCase()}
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${STATUS_BADGE[report.status]}`}>
+                    {report.status}
                   </span>
                   {report.data?.total_enrolled && (
-                    <span className="text-sm text-gray-500">{report.data.total_enrolled} children enrolled</span>
+                    <span className="text-sm font-semibold text-stone-500">{report.data.total_enrolled} children enrolled</span>
                   )}
                 </div>
                 {report.manager_notes && (
-                  <p className="text-sm text-gray-600 mt-2 italic">"{report.manager_notes}"</p>
+                  <p className="text-sm text-stone-600 mt-3 italic border-l-2 border-stone-200 pl-3">"{report.manager_notes}"</p>
                 )}
               </div>
               <div className="flex gap-2">
                 <a href={reportsApi.pdfUrl(report.id)} target="_blank" rel="noreferrer"
-                  className="px-3 py-1.5 bg-red-50 text-red-800 text-sm rounded-lg hover:bg-red-100 font-medium border border-red-100">
+                  className="px-4 py-2 bg-danger/10 text-danger text-sm rounded-lg hover:bg-danger/20 font-bold transition-colors">
                   Download PDF
                 </a>
                 <a href={reportsApi.csvUrl(report.id)} target="_blank" rel="noreferrer"
-                  className="px-3 py-1.5 bg-emerald-50 text-emerald-900 text-sm rounded-lg hover:bg-emerald-100 font-medium border border-emerald-100">
+                  className="px-4 py-2 bg-teal/10 text-teal text-sm rounded-lg hover:bg-teal/20 font-bold transition-colors">
                   Download CSV
                 </a>
                 {report.status === 'draft' && user?.role === 'centre_mgr' && (
                   <button onClick={() => setApprovingId(report.id)}
-                    className="px-3 py-1.5 bg-[#0f2d26] text-white text-sm rounded-lg hover:bg-[#163d34] font-medium">
+                    className="px-4 py-2 btn-gradient text-white text-sm rounded-lg font-bold">
                     Approve and submit
                   </button>
                 )}
@@ -102,11 +103,11 @@ export default function ReportsPage() {
                   rows={3} />
                 <div className="flex gap-2">
                   <button onClick={() => approveMutation.mutate({ id: report.id, notes })}
-                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
+                    className="px-4 py-2 bg-brand-success text-white text-sm font-semibold rounded-lg hover:bg-brand-success/90 transition-colors">
                     Submit to Sector Coordinator
                   </button>
                   <button onClick={() => setApprovingId(null)}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg">Cancel</button>
+                    className="px-4 py-2 bg-stone-100 text-stone-700 text-sm font-semibold rounded-lg hover:bg-stone-200 transition-colors">Cancel</button>
                 </div>
               </div>
             )}

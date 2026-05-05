@@ -52,45 +52,48 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-[42%] xl:w-[45%] bg-[#0f2d26] text-stone-100 flex-col justify-between p-10 xl:p-14 border-r border-black/10">
-        <div>
+      <div className="hidden lg:flex lg:w-[42%] xl:w-[45%] bg-primary text-stone-100 flex-col justify-between p-10 xl:p-14 border-r border-black/10 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/50 to-primary-light/50 opacity-50 mix-blend-overlay pointer-events-none"></div>
+        <div className="relative z-10">
           <p className="font-display text-3xl xl:text-4xl font-semibold tracking-tight text-white">Irerero</p>
-          <p className="mt-4 text-sm text-teal-100/85 leading-relaxed max-w-sm">
+          <p className="mt-4 text-sm text-teal-soft/80 leading-relaxed max-w-sm font-sans">
             Monitoring, attendance, and alerts for early childhood development programmes — built for teams working
             across centres and sectors.
           </p>
         </div>
-        <p className="text-xs text-teal-200/60">Secure sign-in · Role-based access</p>
+        <p className="text-xs text-white/60 relative z-10">Secure sign-in · Role-based access</p>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-stone-100">
-        <div className="w-full max-w-[400px] rounded-xl border border-stone-200/90 bg-white shadow-sm px-8 py-9">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-canvas relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full filter blur-3xl opacity-50 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal/5 rounded-full filter blur-3xl opacity-50 pointer-events-none"></div>
+        <div className="w-full max-w-[400px] rounded-2xl border border-white bg-white shadow-xl px-8 py-9 relative z-10 backdrop-blur-sm bg-white/90">
           <div className="mb-8">
-            <h1 className="font-display text-2xl font-semibold text-stone-900 tracking-tight">Sign in</h1>
-            <p className="text-sm text-stone-500 mt-2">Use your programme account.</p>
+            <h1 className="font-display text-3xl font-semibold text-ink tracking-tight">Sign in</h1>
+            <p className="text-sm text-stone-500 mt-2 font-sans">Use your programme account.</p>
           </div>
           {error && (
-            <div className="mb-5 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm leading-snug">
+            <div className="mb-5 p-3 rounded-lg border border-danger/20 bg-danger/5 text-danger text-sm leading-snug">
               {error}
             </div>
           )}
           <form onSubmit={submit} className="space-y-5">
             <div>
-              <label htmlFor="ir-username" className="block text-xs font-medium text-stone-600 uppercase tracking-wide mb-1.5">
+              <label htmlFor="ir-username" className="block text-xs font-semibold text-ink uppercase tracking-wide mb-1.5">
                 Username
               </label>
               <input
                 id="ir-username"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                className="w-full border border-stone-300 rounded-lg px-3.5 py-2.5 text-stone-900 text-sm placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-teal-700/25 focus:border-teal-700"
+                className="w-full border border-stone-200 rounded-lg px-3.5 py-2.5 text-ink text-sm placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all shadow-sm"
                 placeholder="e.g. sector01"
                 autoComplete="username"
                 required
               />
             </div>
             <div>
-              <label htmlFor="ir-password" className="block text-xs font-medium text-stone-600 uppercase tracking-wide mb-1.5">
+              <label htmlFor="ir-password" className="block text-xs font-semibold text-ink uppercase tracking-wide mb-1.5">
                 Password
               </label>
               <input
@@ -98,7 +101,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full border border-stone-300 rounded-lg px-3.5 py-2.5 text-stone-900 text-sm placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-teal-700/25 focus:border-teal-700"
+                className="w-full border border-stone-200 rounded-lg px-3.5 py-2.5 text-ink text-sm placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all shadow-sm"
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
@@ -107,7 +110,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#0f2d26] text-white py-2.5 rounded-lg text-sm font-medium hover:bg-[#163d34] disabled:opacity-55 transition-colors"
+              className="w-full btn-gradient py-3 rounded-lg text-sm font-semibold tracking-wide disabled:opacity-55 transition-all"
             >
               {loading ? 'Signing in…' : 'Continue'}
             </button>

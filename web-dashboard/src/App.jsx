@@ -10,6 +10,10 @@ import AlertsPage from './pages/AlertsPage'
 import SmsInboxPage from './pages/SmsInboxPage'
 import ReportsPage from './pages/ReportsPage'
 import UsersPage from './pages/UsersPage'
+import StaffManagementPage from './pages/StaffManagementPage'
+import SyncConflictsPage from './pages/SyncConflictsPage'
+import FoodStockPage from './pages/FoodStockPage'
+import SmsCampaignPage from './pages/SmsCampaignPage'
 
 /** Wait for /auth/me when a token exists so role-scoped dashboards query the right endpoint. */
 function useAuthBootstrap() {
@@ -84,6 +88,10 @@ export default function App() {
           <Route path="sms-inbox" element={<SmsInboxPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="users" element={<UsersPage />} />
+          <Route path="staff" element={<StaffManagementPage />} />
+          <Route path="sync-conflicts" element={<SyncConflictsPage />} />
+          <Route path="food-stock" element={<FoodStockPage />} />
+          <Route path="sms-campaign" element={<SmsCampaignPage />} />
         </Route>
       </Route>
 

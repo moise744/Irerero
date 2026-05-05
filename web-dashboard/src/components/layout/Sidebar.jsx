@@ -62,16 +62,25 @@ const baseLinks = [
 
 export default function Sidebar() {
   const role = useAuthStore(s => s.user?.role)
-  const links =
-    role === 'sys_admin'
-      ? [...baseLinks, { to: '/users', label: 'Users', icon: 'users', end: false }]
-      : baseLinks
+  let links = [...baseLinks]
+  
+  if (['centre_mgr', 'sys_admin'].includes(role)) {
+    links.push({ to: '/staff', label: 'Staff', icon: 'users', end: false })
+    links.push({ to: '/sync-conflicts', label: 'Conflicts', icon: 'alerts', end: false })
+    links.push({ to: '/food-stock', label: 'Food Stock', icon: 'reports', end: false })
+  }
+  if (['district', 'national', 'sys_admin'].includes(role)) {
+    links.push({ to: '/sms-campaign', label: 'SMS Blast', icon: 'sms', end: false })
+  }
+  if (role === 'sys_admin') {
+    links.push({ to: '/users', label: 'Users', icon: 'users', end: false })
+  }
 
   return (
-    <aside className="w-56 shrink-0 min-h-screen bg-[#0f2d26] text-stone-100 flex flex-col border-r border-black/10">
+    <aside className="w-56 shrink-0 min-h-screen bg-primary text-stone-100 flex flex-col border-r border-black/10">
       <div className="p-5 border-b border-white/10">
         <p className="font-display text-xl font-semibold tracking-tight text-white">Irerero</p>
-        <p className="text-xs text-teal-200/80 mt-1.5 leading-snug">Early childhood programmes</p>
+        <p className="text-xs text-teal/90 mt-1.5 leading-snug">Early childhood programmes</p>
       </div>
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {links.map(l => (
@@ -80,10 +89,10 @@ export default function Sidebar() {
             to={l.to}
             end={l.end}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-teal-300/80 ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-teal-300/80 ${
                 isActive
-                  ? 'bg-white/12 text-white font-medium shadow-inner'
-                  : 'text-teal-100/85 hover:bg-white/6 hover:text-white'
+                  ? 'bg-white/15 text-white font-medium shadow-inner'
+                  : 'text-white/80 hover:bg-white/10 hover:text-white hover:translate-x-1'
               }`
             }
           >

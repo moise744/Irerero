@@ -255,7 +255,27 @@ def _send_fcm_push(alert: Alert):
                 "severity":   alert.severity,
             },
         )
-        # TODO: Phase 4 — call firebase_admin.messaging.send() here
+        
+        # GAP-014: Implement FCM push notification service
+        try:
+            from firebase_admin import messaging
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title="Irerero Alert",
+                    body=body,
+                ),
+                data={
+                    "alert_id":   str(alert.id),
+                    "alert_type": str(alert.alert_type),
+                    "child_id":   str(alert.child_id),
+                    "severity":   str(alert.severity),
+                },
+                token=user.fcm_token,
+            )
+            messaging.send(message)
+        except Exception as e:
+            # Firebase may not be initialized or token may be invalid
+            print(f"Failed to send FCM push notification: {e}")
 
 
 def _send_sam_sms(alert: Alert, child):

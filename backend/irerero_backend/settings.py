@@ -14,7 +14,7 @@ _raw_allowed = os.environ.get(
 ALLOWED_HOSTS = [
     h.strip() for h in _raw_allowed.replace(",", " ").split() if h.strip()
 ]
-ALLOWED_HOSTS += ["10.15.160.169", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS += ["10.15.160.169", "10.140.255.169", "127.0.0.1", "localhost"]
 # Django test client uses host "testserver" by default.
 if DEBUG and "testserver" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("testserver")

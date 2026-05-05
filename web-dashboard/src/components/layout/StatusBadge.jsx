@@ -1,13 +1,13 @@
 // src/components/layout/StatusBadge.jsx
 // Colour + text — NFR-016 (never colour alone)
 const CONFIG = {
-  sam: { bg: 'bg-red-100', text: 'text-red-800', label: 'SAM' },
-  mam: { bg: 'bg-amber-100', text: 'text-amber-900', label: 'MAM' },
-  stunted: { bg: 'bg-amber-100', text: 'text-amber-900', label: 'Stunted' },
-  severely_stunted: { bg: 'bg-red-100', text: 'text-red-800', label: 'Sev. stunted' },
-  underweight: { bg: 'bg-amber-100', text: 'text-amber-900', label: 'Underweight' },
-  at_risk: { bg: 'bg-amber-50', text: 'text-amber-800', label: 'At risk' },
-  normal: { bg: 'bg-emerald-100', text: 'text-emerald-900', label: 'Normal' },
+  sam: { bg: 'bg-brand-accent/10', text: 'text-brand-accent', label: 'SAM' },
+  mam: { bg: 'bg-orange-500/10', text: 'text-orange-600', label: 'MAM' },
+  stunted: { bg: 'bg-orange-500/10', text: 'text-orange-600', label: 'Stunted' },
+  severely_stunted: { bg: 'bg-brand-accent/10', text: 'text-brand-accent', label: 'Sev. stunted' },
+  underweight: { bg: 'bg-orange-500/10', text: 'text-orange-600', label: 'Underweight' },
+  at_risk: { bg: 'bg-orange-500/10', text: 'text-orange-600', label: 'At risk' },
+  normal: { bg: 'bg-brand-success/10', text: 'text-brand-success', label: 'Normal' },
 }
 export default function StatusBadge({ status }) {
   const c = CONFIG[status] || CONFIG.normal

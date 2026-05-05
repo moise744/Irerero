@@ -6,6 +6,7 @@ import { useAuthStore } from '../hooks/useAuth'
 import AlertsPanel from '../components/alerts/AlertsPanel'
 import SmsInbox from '../components/sms/SmsInbox'
 import StatusDistributionChart from '../components/dashboard/StatusDistributionChart'
+import AlertTrendsChart from '../components/dashboard/AlertTrendsChart'
 import Header from '../components/layout/Header'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet' 
 
@@ -13,10 +14,10 @@ const bar = { emerald: 'border-l-emerald-600', rose: 'border-l-rose-600', sky: '
 
 function StatCard({ label, value, sub, variant = 'slate' }) {
   return (
-    <div className={`rounded-lg border border-stone-200/90 bg-white pl-4 pr-4 py-4 shadow-sm border-l-[3px] ${bar[variant]}`}>
-      <div className="text-2xl font-semibold tabular-nums text-stone-900 tracking-tight">{value}</div>
-      <div className="text-sm font-medium text-stone-600 mt-1">{label}</div>
-      {sub && <div className="text-xs text-stone-500 mt-0.5">{sub}</div>}
+    <div className={`card pl-5 pr-4 py-5 border-l-4 ${bar[variant]}`}>
+      <div className="text-3xl font-bold tabular-nums text-ink tracking-tight">{value}</div>
+      <div className="text-sm font-semibold text-stone-500 mt-1 uppercase tracking-wider">{label}</div>
+      {sub && <div className="text-xs text-stone-400 mt-1">{sub}</div>}
     </div>
   )
 }
@@ -50,10 +51,10 @@ export default function DashboardPage() {
 
   if (drilledCentre) {
     return (
-      <div className="flex-1 overflow-auto min-h-0 bg-stone-50">
+      <div className="flex-1 overflow-auto min-h-0 bg-canvas">
         <Header title={`Centre Details — ${drilledCentre.centre_name}`} />
         <div className="p-6 space-y-6">
-          <button onClick={() => setDrilledCentre(null)} className="flex items-center gap-2 text-sm font-semibold text-[#0f2d26] hover:underline">
+          <button onClick={() => setDrilledCentre(null)} className="flex items-center gap-2 text-sm font-semibold text-accent hover:text-accent-light transition-colors">
             &larr; Back to Sector Overview
           </button>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -62,8 +63,8 @@ export default function DashboardPage() {
             <StatCard label="Stunted %" value={`${drilledCentre.stunted_percent}%`} variant="amber" />
             <StatCard label="Unresolved alerts" value={drilledCentre.unresolved_alerts} variant="slate" />
           </div>
-          <div className="bg-white rounded-xl border border-stone-200/90 shadow-sm p-8 text-center">
-            <h3 className="text-lg font-bold text-stone-800 mb-2">Centre Drill-Down View</h3>
+          <div className="card p-8 text-center">
+            <h3 className="text-xl font-bold text-ink mb-2">Centre Drill-Down View</h3>
             <p className="text-stone-500">Detailed child-level metrics for {drilledCentre.centre_name} are aggregated here.</p>
           </div>
         </div>
@@ -77,32 +78,32 @@ export default function DashboardPage() {
       <div className="p-6 space-y-6">
         
         {['district', 'national', 'sys_admin', 'partner'].includes(role) && (
-          <div className="bg-white rounded-xl border border-stone-200/90 shadow-sm p-4 flex flex-wrap gap-4 items-end">
+          <div className="card p-4 flex flex-wrap gap-4 items-end">
             <div>
-              <label className="block text-xs font-bold text-stone-600 mb-1 uppercase">Time Period</label>
-              <select value={filters.period} onChange={e => setFilters({...filters, period: e.target.value})} className="border border-stone-300 rounded-md px-3 py-1.5 text-sm bg-stone-50">
+              <label className="block text-xs font-bold text-stone-500 mb-1.5 uppercase tracking-wide">Time Period</label>
+              <select value={filters.period} onChange={e => setFilters({...filters, period: e.target.value})} className="border border-stone-200 rounded-lg px-3 py-2 text-sm bg-stone-50 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
                 <option value="this_month">This Month</option>
                 <option value="last_3_months">Last 3 Months</option>
                 <option value="this_year">This Year</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-stone-600 mb-1 uppercase">Age Group</label>
-              <select value={filters.ageGroup} onChange={e => setFilters({...filters, ageGroup: e.target.value})} className="border border-stone-300 rounded-md px-3 py-1.5 text-sm bg-stone-50">
+              <label className="block text-xs font-bold text-stone-500 mb-1.5 uppercase tracking-wide">Age Group</label>
+              <select value={filters.ageGroup} onChange={e => setFilters({...filters, ageGroup: e.target.value})} className="border border-stone-200 rounded-lg px-3 py-2 text-sm bg-stone-50 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
                 <option value="all">All Ages (0-8 yrs)</option>
                 <option value="0-2">Infant (0-2 yrs)</option>
                 <option value="3-6">Pre-school (3-6 yrs)</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-stone-600 mb-1 uppercase">Gender</label>
-              <select value={filters.sex} onChange={e => setFilters({...filters, sex: e.target.value})} className="border border-stone-300 rounded-md px-3 py-1.5 text-sm bg-stone-50">
+              <label className="block text-xs font-bold text-stone-500 mb-1.5 uppercase tracking-wide">Gender</label>
+              <select value={filters.sex} onChange={e => setFilters({...filters, sex: e.target.value})} className="border border-stone-200 rounded-lg px-3 py-2 text-sm bg-stone-50 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
                 <option value="all">All</option>
                 <option value="male">Boys</option>
                 <option value="female">Girls</option>
               </select>
             </div>
-            <button onClick={() => refetch()} className="px-4 py-1.5 bg-[#0f2d26] text-white text-sm font-semibold rounded-md hover:bg-[#163d34] shadow-sm">
+            <button onClick={() => refetch()} className="px-5 py-2 btn-gradient rounded-lg text-sm font-semibold">
               Apply Filters
             </button>
           </div>
@@ -130,32 +131,35 @@ export default function DashboardPage() {
               {d.total_children != null && <StatCard label="Total children" value={d.total_children} variant="sky" />}
             </div>
 
-            {d.status_distribution && <StatusDistributionChart data={d.status_distribution} />}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+              {d.status_distribution && <StatusDistributionChart data={d.status_distribution} />}
+              <AlertTrendsChart />
+            </div>
 
             {d.centres && (
-              <div className="bg-white rounded-xl border border-stone-200/90 shadow-sm p-5">
-                <h3 className="font-display font-semibold text-stone-900 mb-4">Centres overview</h3>
-                <div className="overflow-x-auto rounded-lg border border-stone-200">
+              <div className="card p-5 mt-6">
+                <h3 className="font-display text-lg font-bold text-ink mb-4">Centres overview</h3>
+                <div className="overflow-x-auto rounded-lg border border-stone-100">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-stone-100 text-stone-700 text-left text-xs uppercase tracking-wide">
-                        <th className="px-4 py-3 font-medium">Centre</th>
-                        <th className="px-4 py-3 font-medium text-center">Enrolled</th>
-                        <th className="px-4 py-3 font-medium text-center">SAM %</th>
-                        <th className="px-4 py-3 font-medium text-center">Stunted %</th>
-                        <th className="px-4 py-3 font-medium text-center">Alerts</th>
-                        <th className="px-4 py-3 font-medium text-right">Action</th>
+                      <tr className="bg-canvas text-stone-500 text-left text-xs uppercase tracking-wider">
+                        <th className="px-4 py-3.5 font-semibold">Centre</th>
+                        <th className="px-4 py-3.5 font-semibold text-center">Enrolled</th>
+                        <th className="px-4 py-3.5 font-semibold text-center">SAM %</th>
+                        <th className="px-4 py-3.5 font-semibold text-center">Stunted %</th>
+                        <th className="px-4 py-3.5 font-semibold text-center">Alerts</th>
+                        <th className="px-4 py-3.5 font-semibold text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-stone-100">
                       {d.centres.map((c, i) => (
-                        <tr key={c.centre_id} onClick={() => setDrilledCentre(c)} className={`${i % 2 === 0 ? 'bg-white' : 'bg-stone-50/80'} hover:bg-teal-50 cursor-pointer transition-colors`}>
-                          <td className="px-4 py-2.5 font-medium text-stone-800">{c.centre_name}</td>
-                          <td className="px-4 py-2.5 text-center tabular-nums">{c.total_enrolled}</td>
-                          <td className="px-4 py-2.5 text-center tabular-nums"><span className={`font-semibold ${c.sam_percent > 5 ? 'text-red-700' : 'text-emerald-700'}`}>{c.sam_percent}%</span></td>
-                          <td className="px-4 py-2.5 text-center tabular-nums text-stone-700">{c.stunted_percent}%</td>
-                          <td className="px-4 py-2.5 text-center">{c.unresolved_alerts > 0 ? <span className="inline-flex justify-center rounded-full bg-red-100 text-red-800 px-2 py-0.5 text-xs font-semibold">{c.unresolved_alerts}</span> : <span className="text-emerald-700 text-xs font-medium">None</span>}</td>
-                          <td className="px-4 py-2.5 text-right"><button className="text-xs font-bold text-teal-700 hover:underline">View &rarr;</button></td>
+                        <tr key={c.centre_id} onClick={() => setDrilledCentre(c)} className="hover:bg-stone-50 cursor-pointer transition-colors group">
+                          <td className="px-4 py-3 font-semibold text-ink">{c.centre_name}</td>
+                          <td className="px-4 py-3 text-center tabular-nums text-stone-600">{c.total_enrolled}</td>
+                          <td className="px-4 py-3 text-center tabular-nums"><span className={`font-bold px-2 py-1 rounded-full ${c.sam_percent > 5 ? 'bg-danger/10 text-danger' : 'bg-teal/10 text-teal'}`}>{c.sam_percent}%</span></td>
+                          <td className="px-4 py-3 text-center tabular-nums text-stone-600">{c.stunted_percent}%</td>
+                          <td className="px-4 py-3 text-center">{c.unresolved_alerts > 0 ? <span className="inline-flex justify-center rounded-full bg-danger/10 text-danger px-2.5 py-0.5 text-xs font-bold">{c.unresolved_alerts}</span> : <span className="text-teal text-xs font-semibold">None</span>}</td>
+                          <td className="px-4 py-3 text-right"><button className="text-xs font-bold text-accent group-hover:text-accent-light transition-colors">View &rarr;</button></td>
                         </tr>
                       ))}
                     </tbody>
@@ -165,13 +169,13 @@ export default function DashboardPage() {
             )}
 
             {['district', 'national', 'sys_admin', 'partner'].includes(role) && d.centres && (
-              <div className="bg-white rounded-xl border border-stone-200/90 shadow-sm p-5 mt-6">
-                <h3 className="font-display font-semibold text-stone-900 mb-4">Geographic Hotspot Map</h3>
-                <div className="h-96 w-full rounded-lg overflow-hidden border border-stone-200 z-0 relative">
+              <div className="card p-5 mt-6">
+                <h3 className="font-display text-lg font-bold text-ink mb-4">Geographic Hotspot Map</h3>
+                <div className="h-96 w-full rounded-xl overflow-hidden border border-stone-100 z-0 relative">
                   <MapContainer center={[-1.9403, 29.8739]} zoom={8} scrollWheelZoom={false} className="h-full w-full">
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" attribution='&copy; OpenStreetMap' />
                     {d.centres.map(c => (
-                       <CircleMarker key={c.centre_id} center={[c.gps_latitude || -1.9403, c.gps_longitude || 29.8739]} radius={Math.max(5, c.sam_percent)} pathOptions={{ fillColor: c.sam_percent > 5 ? '#ef4444' : '#22c55e', color: 'white', weight: 1, fillOpacity: 0.7 }}>
+                       <CircleMarker key={c.centre_id} center={[c.gps_latitude || -1.9403, c.gps_longitude || 29.8739]} radius={Math.max(5, c.sam_percent)} pathOptions={{ fillColor: c.sam_percent > 5 ? '#e21e5a' : '#00d084', color: 'white', weight: 2, fillOpacity: 0.8 }}>
                          <Popup><strong>{c.centre_name}</strong><br/>Enrolled: {c.total_enrolled}<br/>SAM: {c.sam_percent}%</Popup>
                        </CircleMarker>
                     ))}

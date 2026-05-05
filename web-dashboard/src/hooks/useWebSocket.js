@@ -4,14 +4,19 @@ import { useEffect, useRef, useCallback } from 'react'
 
 export function useWebSocket(path, onMessage) {
   const ws  = useRef(null)
-  const url = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}${path}`
-
   const connect = useCallback(() => {
-    ws.current = new WebSocket(url)
+    // GAP-015: Connect to backend WebSocket instead of frontend dev server
+    let wsHost = window.location.host
+    if (wsHost.includes('localhost') || wsHost.includes('127.0.0.1')) {
+      wsHost = 'localhost:8000'
+    }
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${wsHost}${path}`
+    
+    ws.current = new WebSocket(wsUrl)
     ws.current.onmessage = e => { try { onMessage(JSON.parse(e.data)) } catch {} }
     ws.current.onclose   = () => setTimeout(connect, 3000) // auto-reconnect
     ws.current.onerror   = () => ws.current?.close()
-  }, [url, onMessage])
+  }, [path, onMessage])
 
   useEffect(() => { connect(); return () => ws.current?.close() }, [connect])
 }

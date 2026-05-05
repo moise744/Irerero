@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,6 +9,22 @@
     @apply antialiased;
   }
   body {
-    @apply font-sans text-ink bg-stone-100;
+    @apply font-sans;
+    color: theme('colors.ink');
+    background-color: theme('colors.canvas');
+  }
+}
+
+@layer components {
+  .btn-gradient {
+    @apply text-white border-0 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5;
+    background-image: theme('backgroundImage.btn-gradient');
+  }
+  .btn-gradient:hover {
+    background-image: theme('backgroundImage.btn-gradient-hover');
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-stone-100 transition-all duration-300 hover:shadow-md;
   }
 }

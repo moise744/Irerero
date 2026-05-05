@@ -31,6 +31,18 @@ class ChildListSerializer(serializers.ModelSerializer):
             "guardian_name", "guardian_phone", "home_village",
         ]
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request and request.user.role == Role.PARTNER:
+            # Anonymize PII for Partner role (GAP-004)
+            data["full_name"] = "Anonymised"
+            data.pop("photo", None)
+            data.pop("guardian_name", None)
+            data.pop("guardian_phone", None)
+            data.pop("home_village", None)
+        return data
+
 
 class ChildDetailSerializer(serializers.ModelSerializer):
     """
@@ -55,11 +67,17 @@ class ChildDetailSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        # Hide sensitive fields from Caregiver and CHW — FR-017
         request = self.context.get("request")
-        if request and request.user.role in {Role.CAREGIVER, Role.CHW}:
-            for field in ["is_orphan", "has_disability", "hiv_exposure_status", "chronic_conditions"]:
-                data.pop(field, None)
+        if request:
+            # Hide sensitive fields from Caregiver and CHW — FR-017
+            if request.user.role in {Role.CAREGIVER, Role.CHW}:
+                for field in ["is_orphan", "has_disability", "hiv_exposure_status", "chronic_conditions"]:
+                    data.pop(field, None)
+            # Anonymize PII for Partner role (GAP-004)
+            elif request.user.role == Role.PARTNER:
+                data["full_name"] = "Anonymised"
+                for field in ["photo", "guardian_name", "guardian_phone", "home_village", "notes", "is_orphan", "has_disability", "hiv_exposure_status", "chronic_conditions"]:
+                    data.pop(field, None)
         return data
 
 

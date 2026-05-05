@@ -43,6 +43,7 @@ urlpatterns = [
         path("sync/",         include("sync.urls")),
         path("notifications/", include("notifications.urls")),
         path("ai/retrain/",   __import__('ai.views', fromlist=['MLRetrainView']).MLRetrainView.as_view(), name="ml-retrain"),
+        path("audit-logs/",   __import__('auth_module.views', fromlist=['AuditLogListView']).AuditLogListView.as_view(), name="audit-logs"),
     ])),
 ]
 

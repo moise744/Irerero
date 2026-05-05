@@ -12,6 +12,10 @@ services:
         generateValue: true
       - key: DJANGO_DEBUG
         value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "irerero-api.onrender.com"
+      - key: CORS_ORIGINS
+        value: "https://irerero-dashboard.onrender.com"
       - key: DB_ENGINE
         value: django.db.backends.postgresql
       - key: DB_NAME

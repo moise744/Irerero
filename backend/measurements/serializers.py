@@ -7,6 +7,7 @@ from decimal import Decimal
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Measurement, NutritionalStatus, MeasurementSource
+from auth_module.models import Role
 
 
 class RecordMeasurementSerializer(serializers.ModelSerializer):
@@ -113,3 +114,11 @@ class MeasurementSerializer(serializers.ModelSerializer):
             "source", "device_id",
             "recorded_by", "recorded_at",
         ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request and request.user.role == Role.PARTNER:
+            # GAP-004: Anonymize child name for partner
+            data["child_name"] = "Anonymised"
+        return data

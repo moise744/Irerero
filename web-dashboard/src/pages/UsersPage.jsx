@@ -53,26 +53,26 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="flex-1 overflow-auto bg-stone-50 relative">
+    <div className="flex-1 overflow-auto bg-canvas relative">
       <Header title="System Administration" />
       
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold font-display text-stone-800">User Management</h2>
+          <h2 className="text-2xl font-bold font-display text-ink tracking-tight">User Management</h2>
           <div className="flex gap-3">
-            <button onClick={() => mlMutation.mutate()} disabled={mlMutation.isPending} className="px-4 py-2 bg-purple-600 text-white rounded shadow text-sm font-semibold hover:bg-purple-700 disabled:opacity-50">
+            <button onClick={() => mlMutation.mutate()} disabled={mlMutation.isPending} className="px-5 py-2.5 bg-primary text-white rounded-lg shadow text-sm font-semibold hover:bg-primary-light disabled:opacity-50 transition-colors">
               {mlMutation.isPending ? 'Training...' : 'Retrain ML Model'}
             </button>
-            <button onClick={() => setShowAdd(true)} className="px-4 py-2 bg-[#0f2d26] text-white rounded shadow text-sm font-semibold hover:bg-[#163d34]">
+            <button onClick={() => setShowAdd(true)} className="px-5 py-2.5 btn-gradient rounded-lg text-sm font-semibold">
               + Create User
             </button>
           </div>
         </div>
 
         {isLoading ? <p>Loading users...</p> : (
-          <div className="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
+          <div className="card overflow-hidden">
             <table className="w-full text-sm text-left">
-              <thead className="bg-stone-100 text-stone-700 uppercase text-xs">
+              <thead className="bg-stone-50 text-stone-500 uppercase text-xs tracking-wider border-b border-stone-100">
                 <tr>
                   <th className="px-4 py-3">Username</th>
                   <th className="px-4 py-3">Full name</th>
@@ -88,7 +88,7 @@ export default function UsersPage() {
                     <td className="px-4 py-3 font-medium">{u.full_name}</td>
                     <td className="px-4 py-3">{u.role_display || u.role}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      <span className={`px-2 py-1 rounded-md text-xs font-bold ${u.is_active ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-accent/10 text-brand-accent'}`}>
                         {u.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
@@ -97,7 +97,7 @@ export default function UsersPage() {
                         if(window.confirm(`Issue Remote Wipe for ${u.username}? This will erase local device data.`)) {
                           wipeMutation.mutate(u.id)
                         }
-                      }} className="text-red-600 hover:text-red-800 text-xs font-bold border border-red-200 px-2 py-1 rounded bg-red-50">
+                      }} className="text-brand-accent hover:text-brand-accent/80 text-xs font-bold border border-brand-accent/20 px-2 py-1 rounded-md bg-brand-accent/5 transition-colors">
                         Remote Wipe
                       </button>
                     </td>
@@ -111,13 +111,13 @@ export default function UsersPage() {
 
       {/* CREATE USER MODAL */}
       {showAdd && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4">Create New User</h3>
+        <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="card p-8 w-full max-w-md">
+            <h3 className="font-display text-2xl font-bold text-ink mb-6">Create New User</h3>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Username</label>
-                <input required className="w-full border px-3 py-2 rounded" value={newUser.username} onChange={e => setNewUser({...newUser, username: e.target.value})} />
+                <label className="block text-xs font-bold text-stone-600 mb-1.5 uppercase tracking-wide">Username</label>
+                <input required className="w-full border border-stone-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none px-3.5 py-2.5 rounded-lg transition-all" value={newUser.username} onChange={e => setNewUser({...newUser, username: e.target.value})} />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Full Name</label>
@@ -144,9 +144,9 @@ export default function UsersPage() {
                   <input className="w-full border px-3 py-2 rounded" placeholder="Optional for testing" value={newUser.centre_id} onChange={e => setNewUser({...newUser, centre_id: e.target.value})} />
                 </div>
               )}
-              <div className="flex justify-end gap-2 mt-6">
-                <button type="button" onClick={() => setShowAdd(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded font-semibold">Cancel</button>
-                <button type="submit" disabled={createUserMutation.isPending} className="px-4 py-2 bg-[#0f2d26] text-white rounded font-semibold disabled:opacity-50">
+              <div className="flex justify-end gap-3 mt-8">
+                <button type="button" onClick={() => setShowAdd(false)} className="px-5 py-2.5 bg-stone-100 text-stone-600 hover:bg-stone-200 rounded-lg font-semibold transition-colors">Cancel</button>
+                <button type="submit" disabled={createUserMutation.isPending} className="px-5 py-2.5 btn-gradient rounded-lg font-semibold disabled:opacity-50">
                   {createUserMutation.isPending ? 'Saving...' : 'Save User'}
                 </button>
               </div>

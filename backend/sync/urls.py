@@ -3,6 +3,8 @@ from django.urls import path
 from . import views
 urlpatterns = [
     path("", views.SyncView.as_view(), name="sync-upload"),
+    path("conflicts/", views.SyncConflictsView.as_view(), name="sync-conflicts"),
+    path("conflicts/<uuid:pk>/resolve/", views.SyncConflictResolveView.as_view(), name="sync-conflict-resolve"),
 ]
 
 # DHIS2 export stub — FR-060, §5.3 (DHIS2-compatible schema from day 1)

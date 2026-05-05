@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import IreroUser, AuditLog
+from .models import IreroUser, AuditLog, Role
 from .permissions import IsSysAdmin
 from .serializers import LoginSerializer, UserSerializer, CreateUserSerializer
 
@@ -165,3 +165,62 @@ def remote_wipe_view(request, pk):
     target.save(update_fields=["fcm_token", "is_active"])
     _log(request.user, "user.remote_wipe", record_id=pk, request=request)
     return Response({"detail": "Remote wipe scheduled. Device will erase data on next connectivity."})
+
+
+class AuditLogListView(APIView):
+    """
+    GET /api/v1/audit-logs/
+    Returns audit logs for the SysAdmin. GAP-005.
+    """
+    permission_classes = [IsAuthenticated, IsSysAdmin]
+
+    def get(self, request):
+        from .serializers import AuditLogSerializer
+        # limit to 100 for simplicity or use pagination
+        logs = AuditLog.objects.all().order_by("-changed_at")[:100]
+        return Response(AuditLogSerializer(logs, many=True).data)
+class CentreStaffView(APIView):
+    """
+    GET /api/v1/users/centre-staff/
+    POST /api/v1/users/centre-staff/
+    Allows Centre Manager to view and add staff to their centre. GAP-007.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in [Role.CENTRE_MGR, Role.SYS_ADMIN]:
+            return Response({"detail": "Not authorized."}, status=403)
+        users = IreroUser.objects.filter(centre_id=request.user.centre_id, is_active=True)
+        return Response(UserSerializer(users, many=True).data)
+
+    def post(self, request):
+        if request.user.role not in [Role.CENTRE_MGR, Role.SYS_ADMIN]:
+            return Response({"detail": "Not authorized."}, status=403)
+        data = request.data.copy()
+        data["centre_id"] = request.user.centre_id
+        # Force role to caregiver or chw if Centre Manager is creating
+        if data.get("role") not in [Role.CAREGIVER, Role.CHW]:
+            data["role"] = Role.CAREGIVER
+        
+        serializer = CreateUserSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        _log(request.user, "user.create_staff", record_id=user.id, request=request)
+        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+
+class CentreStaffDetailView(APIView):
+    """
+    DELETE /api/v1/users/centre-staff/{id}/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        if request.user.role not in [Role.CENTRE_MGR, Role.SYS_ADMIN]:
+            return Response({"detail": "Not authorized."}, status=403)
+        target = IreroUser.objects.filter(pk=pk, centre_id=request.user.centre_id).first()
+        if not target:
+            return Response({"detail": "Not found."}, status=404)
+        target.is_active = False
+        target.save(update_fields=["is_active"])
+        _log(request.user, "user.remove_staff", record_id=pk, request=request)
+        return Response(status=status.HTTP_204_NO_CONTENT)

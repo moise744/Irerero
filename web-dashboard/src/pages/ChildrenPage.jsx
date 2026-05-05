@@ -111,7 +111,7 @@ function ReferralsTab({ childId }) {
   const referrals = data || []
   if (!referrals.length) return <div className="bg-white rounded-xl shadow p-6 text-center text-gray-400">No referrals recorded.</div>
 
-  const statusColor = { pending: 'bg-yellow-100 text-yellow-800', attended: 'bg-blue-100 text-blue-800', treatment_given: 'bg-green-100 text-green-800', closed: 'bg-gray-100 text-gray-700' }
+  const statusColor = { pending: 'bg-orange-500/10 text-orange-600', attended: 'bg-blue-500/10 text-blue-700', treatment_given: 'bg-brand-success/10 text-brand-success', closed: 'bg-stone-100 text-stone-600' }
   return (
     <div className="space-y-3">
       {referrals.map(r => (

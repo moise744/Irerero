@@ -16,5 +16,6 @@ urlpatterns = [
     path("dashboards/sector/",     views.SectorDashboardView.as_view(),           name="dashboard-sector"),
     path("dashboards/district/",   views.DistrictNationalDashboardView.as_view(), name="dashboard-district"),
     path("dashboards/national/",   views.DistrictNationalDashboardView.as_view(), name="dashboard-national"),
+    path("sdg-indicators/",        views.SdgIndicatorsView.as_view(),             name="sdg-indicators"),
     path("children/<uuid:pk>/growth-report.pdf", views.ChildGrowthReportPDFView.as_view(), name="child-growth-report"),
 ]
