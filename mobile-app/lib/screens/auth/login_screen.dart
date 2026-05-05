@@ -134,7 +134,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: _t['username'],
                         prefixIcon: const Icon(Icons.person_outline),
-                        border: const OutlineInputBorder(),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: cs.outlineVariant),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: cs.outlineVariant),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: cs.primary, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
                       ),
                       validator: (v) => v == null || v.isEmpty
                           ? (_selectedLang == 'rw' ? 'Uzuza iri gace.' : 'This field is required.')
@@ -149,7 +162,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: _t['password'],
                         prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: cs.outlineVariant),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: cs.outlineVariant),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: cs.primary, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
                         suffixIcon: IconButton(
                           icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
                           onPressed: () => setState(() => _obscure = !_obscure),
@@ -163,14 +189,38 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
 
                     // Login button — NFR-015: 48dp minimum height
-                    SizedBox(
+                    Container(
                       height: 52,
-                      child: FilledButton(
-                        onPressed: _loading ? null : _submit,
-                        child: _loading
-                            ? const SizedBox(width: 20, height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : Text(_t['login']!, style: const TextStyle(fontSize: 16)),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFef295d), Color(0xFFa22891)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFef295d).withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: _loading ? null : _submit,
+                          child: Center(
+                            child: _loading
+                                ? const SizedBox(width: 20, height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : Text(
+                                    _t['login']!, 
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.1)
+                                  ),
+                          ),
+                        ),
                       ),
                     ),
 

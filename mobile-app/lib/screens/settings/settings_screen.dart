@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../db/database_helper.dart';
 import '../auth/login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -58,6 +59,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
               leading: const Icon(Icons.info_outline, color: Colors.blue),
               title: const Text('Irerero App Version'),
               subtitle: const Text('v1.0.0 (Offline-First Edition)'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // GAP-010: Offline Data Purge UI
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.delete_forever, color: Colors.red),
+              title: const Text('Siba amakuru yose (Reset Database)'),
+              subtitle: const Text('Siba amakuru yose ari kuri telefoni'),
+              onTap: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Siba amakuru yose?'),
+                    content: const Text('Ibi birasiba amakuru yose yari abitswe kuri iyi telefoni. Uzi neza ko ushaka kubikora?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Oya (Cancel)'),
+                      ),
+                      FilledButton(
+                        style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Yego (Erase)'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true && context.mounted) {
+                  await DatabaseHelper.instance.database.then((db) async {
+                    await db.delete('children');
+                    await db.delete('measurements');
+                    await db.delete('attendance');
+                    await db.delete('referrals');
+                    await db.delete('alerts');
+                    await db.delete('sync_queue');
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Amakuru yose yasibwe (Database reset)')),
+                  );
+                }
+              },
             ),
           ),
           

@@ -76,7 +76,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (mounted) {
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ibarura ryatunganijwe!'), backgroundColor: Colors.green),
+        const SnackBar(content: Text('Ibarura ryatunganijwe!'), backgroundColor: Color(0xFF00d084)),
       );
     }
   }
@@ -89,10 +89,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('$_today — ${_children.length} abana',
               style: const TextStyle(fontWeight: FontWeight.bold)),
-          FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save),
-            label: Text(_saving ? 'Bitungwa...' : 'Bika Ibarura'),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFFef295d), Color(0xFFa22891)]),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: _saving ? null : _save,
+              icon: _saving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save),
+              label: Text(_saving ? 'Bitungwa...' : 'Bika Ibarura'),
+            ),
           ),
         ]),
       ),
@@ -106,9 +117,25 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             leading: GestureDetector(
               // Single tap marks present/absent — NFR-017: 1 tap per child
               onTap: () => setState(() => _status[id] = present ? 'absent' : 'present'),
-              child: CircleAvatar(
-                backgroundColor: present ? Colors.green : Colors.red,
-                child: Icon(present ? Icons.check : Icons.close, color: Colors.white, size: 20),
+              child: Container(
+                width: 85,
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                decoration: BoxDecoration(
+                  color: present ? const Color(0xFF00d084).withOpacity(0.1) : const Color(0xFFe21e5a).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: present ? const Color(0xFF00d084).withOpacity(0.3) : const Color(0xFFe21e5a).withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(present ? Icons.check_circle_outline : Icons.cancel_outlined, 
+                         color: present ? const Color(0xFF00d084) : const Color(0xFFe21e5a), size: 16),
+                    const SizedBox(width: 4),
+                    Text(present ? 'Hano' : 'Ntahari', 
+                         style: TextStyle(color: present ? const Color(0xFF00d084) : const Color(0xFFe21e5a), 
+                                          fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
             ),
             title: Text(child['full_name'] as String? ?? ''),

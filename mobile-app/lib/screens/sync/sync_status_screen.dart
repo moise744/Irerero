@@ -23,6 +23,7 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
   }
 
   Future<void> _loadQueue() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     final rows = await DatabaseHelper.instance.query(
       'sync_queue',

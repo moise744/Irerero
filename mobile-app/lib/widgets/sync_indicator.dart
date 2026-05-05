@@ -21,15 +21,15 @@ class SyncIndicator extends StatelessWidget {
       switch (sync.status) {
         case SyncStatus.synced:
           icon    = Icons.cloud_done;
-          colour  = Colors.green;
+          colour  = const Color(0xFF00d084);
           tooltip = 'All data synced';
         case SyncStatus.syncing:
           icon    = Icons.cloud_sync;
-          colour  = Colors.blue;
+          colour  = const Color(0xFF3E35A5);
           tooltip = 'Syncing…';
         case SyncStatus.error:
           icon    = Icons.cloud_off;
-          colour  = Colors.red;
+          colour  = const Color(0xFFe21e5a);
           tooltip = 'Sync error — will retry';
         case SyncStatus.idle:
           if (sync.pendingCount > 0) {
@@ -38,7 +38,7 @@ class SyncIndicator extends StatelessWidget {
             tooltip = '${sync.pendingCount} record(s) pending upload';
           } else {
             icon    = Icons.cloud_done;
-            colour  = Colors.green;
+            colour  = const Color(0xFF00d084);
             tooltip = 'All data synced';
           }
       }

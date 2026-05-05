@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'db/database_helper.dart';
 import 'services/auth_service.dart';
@@ -79,8 +80,25 @@ class IrereroApp extends StatelessWidget {
             theme: ThemeData(
               useMaterial3: true,
               colorScheme: ColorScheme.fromSeed(
-                seedColor: const Color(0xFF0F4C44),
+                seedColor: const Color(0xFF3E35A5), // Deep Indigo
+                primary: const Color(0xFF3E35A5),
+                secondary: const Color(0xFFe21e5a), // Vivid Pink
                 brightness: Brightness.light,
+                surface: const Color(0xFFF7F7F7),
+              ),
+              textTheme: GoogleFonts.sourceSans3TextTheme(
+                Theme.of(context).textTheme,
+              ),
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              appBarTheme: const AppBarTheme(
+                centerTitle: true,
+                elevation: 0,
+                scrolledUnderElevation: 2,
               ),
               materialTapTargetSize: MaterialTapTargetSize.padded,
             ),

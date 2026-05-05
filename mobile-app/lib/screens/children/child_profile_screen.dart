@@ -12,6 +12,8 @@ import '../referrals/referral_screen.dart';
 import '../nutrition/nutrition_screen.dart';
 import '../../ai/zscore_calculator.dart';
 
+import 'edit_child_profile_screen.dart';
+
 class ChildProfileScreen extends StatefulWidget {
   final Map<String, dynamic> child;
   const ChildProfileScreen({super.key, required this.child});
@@ -23,6 +25,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> with SingleTick
   Map<String, dynamic>? _lastMeasurement;
   String _currentStatus = 'normal';
   String? _trendArrow;
+  late Map<String, dynamic> _childData;
 
   // 8 tabs now including Milestones (Ibimenyetso)
   static const _tabLabels = ['Imikurire', 'Ibarura', 'Indyo', 'Guhanura', 'Iburira', 'Inkingo', 'Ibimenyetso', 'Inyandiko'];
@@ -30,12 +33,13 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> with SingleTick
   @override
   void initState() {
     super.initState();
+    _childData = widget.child;
     _tabs = TabController(length: 8, vsync: this);
     _loadData();
   }
 
   Future<void> _loadData() async {
-    final childId = widget.child['uuid'] as String;
+    final childId = _childData['uuid'] as String;
     final meas = await DatabaseHelper.instance.query('measurements',
         where: 'child_uuid = ?', whereArgs: [childId],
         orderBy: 'recorded_at DESC', limit: 2);
@@ -60,7 +64,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    final child = widget.child;
+    final child = _childData;
 
     return Scaffold(
       appBar: AppBar(
@@ -72,12 +76,23 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> with SingleTick
           if (_trendArrow != null) Padding(
             padding: const EdgeInsets.all(8),
             child: Chip(label: Text(_trendArrow!, style: TextStyle(
-              color: _trendArrow == '↑' ? Colors.green : _trendArrow == '↓' ? Colors.red : Colors.orange,
+              color: _trendArrow == '↑' ? const Color(0xFF00d084) : _trendArrow == '↓' ? const Color(0xFFe21e5a) : Colors.orange,
               fontSize: 18, fontWeight: FontWeight.bold))),
           ),
+          IconButton(icon: const Icon(Icons.edit), tooltip: 'Edit Profile',
+              onPressed: () async {
+                final updated = await Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => EditChildProfileScreen(child: _childData)));
+                if (updated == true) {
+                  final dbData = await DatabaseHelper.instance.query('children', where: 'uuid = ?', whereArgs: [child['uuid']]);
+                  if (dbData.isNotEmpty && mounted) {
+                    setState(() => _childData = dbData.first);
+                  }
+                }
+              }),
           IconButton(icon: const Icon(Icons.monitor_weight_outlined), tooltip: 'Record measurement',
               onPressed: () => Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => MeasurementScreen(child: child)))),
+                  builder: (_) => MeasurementScreen(child: _childData)))),
         ],
         bottom: TabBar(controller: _tabs,
             isScrollable: true,
@@ -287,7 +302,7 @@ class _AttendanceTabState extends State<_AttendanceTab> {
       : ListView.builder(itemCount: _records.length, itemBuilder: (_, i) {
           final r = _records[i];
           return ListTile(
-            leading: Icon(r['status'] == 'present' ? Icons.check_circle : Icons.cancel, color: r['status'] == 'present' ? Colors.green : Colors.red),
+            leading: Icon(r['status'] == 'present' ? Icons.check_circle : Icons.cancel, color: r['status'] == 'present' ? const Color(0xFF00d084) : const Color(0xFFe21e5a)),
             title: Text(r['date'] as String? ?? ''),
             subtitle: r['absence_reason'] != null && (r['absence_reason'] as String).isNotEmpty ? Text(r['absence_reason'] as String) : null,
           );
@@ -301,7 +316,7 @@ class _NutritionTab extends StatelessWidget {
   @override Widget build(BuildContext context) {
     return Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.restaurant, size: 48, color: Colors.green),
+        const Icon(Icons.restaurant, size: 48, color: Color(0xFF00d084)),
         const SizedBox(height: 12),
         FilledButton.icon(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NutritionScreen())),
@@ -319,7 +334,7 @@ class _ReferralsTab extends StatelessWidget {
   @override Widget build(BuildContext context) {
     return Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.local_hospital, size: 48, color: Colors.blue),
+        Icon(Icons.local_hospital, size: 48, color: Theme.of(context).colorScheme.primary),
         const SizedBox(height: 12),
         FilledButton.icon(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ReferralScreen())),
@@ -340,8 +355,8 @@ class _AlertsTab extends StatelessWidget {
       builder: (ctx, snap) {
         if (!snap.hasData) return const Center(child: CircularProgressIndicator());
         final rows = snap.data!;
-        if (rows.isEmpty) return const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.check_circle_outline, size: 48, color: Colors.green), SizedBox(height: 8), Text('Nta burira kuri uyu mwana.')]));
-        Color colour(String s) => s == 'urgent' ? Colors.red : s == 'warning' ? Colors.orange : Colors.blue;
+        if (rows.isEmpty) return const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.check_circle_outline, size: 48, color: Color(0xFF00d084)), SizedBox(height: 8), Text('Nta burira kuri uyu mwana.')]));
+        Color colour(String s) => s == 'urgent' ? const Color(0xFFe21e5a) : s == 'warning' ? Colors.orange : const Color(0xFF3E35A5);
         return ListView.builder(
           padding: const EdgeInsets.all(12),
           itemCount: rows.length,
@@ -390,7 +405,7 @@ class _ImmunisationTabState extends State<_ImmunisationTab> {
         final rows = snap.data!;
         if (rows.isEmpty) {
           return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.vaccines, size: 48, color: Colors.teal.shade200),
+            Icon(Icons.vaccines, size: 48, color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: () async {
@@ -414,7 +429,7 @@ class _ImmunisationTabState extends State<_ImmunisationTab> {
           itemBuilder: (_, i) {
             final v = rows[i];
             final status = (v['status'] as String?) ?? 'due';
-            final colour = status == 'administered' ? Colors.green : (status == 'overdue' ? Colors.red : Colors.orange);
+            final colour = status == 'administered' ? const Color(0xFF00d084) : (status == 'overdue' ? const Color(0xFFe21e5a) : Colors.orange);
             return Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(
               leading: Icon(Icons.vaccines, color: colour),
               title: Text(v['vaccine_name'] as String? ?? ''),
@@ -452,7 +467,7 @@ class _MilestonesTabState extends State<_MilestonesTab> {
         
         if (rows.isEmpty) {
           return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.child_care, size: 48, color: Colors.purple.shade200),
+            Icon(Icons.child_care, size: 48, color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: () async {
@@ -513,7 +528,7 @@ class _NotesTabState extends State<_NotesTab> {
       FilledButton(onPressed: () async {
         await DatabaseHelper.instance.update('children', {'notes': _ctrl.text}, where: 'uuid = ?', whereArgs: [widget.child['uuid']]);
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notes saved'), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notes saved'), backgroundColor: Color(0xFF00d084)));
       }, child: const Text('Save Notes')),
     ]),
   );

@@ -27,14 +27,14 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 
   Color _severityColour(String s) =>
-      s == 'urgent' ? Colors.red : s == 'warning' ? Colors.orange : Colors.blue;
+      s == 'urgent' ? const Color(0xFFe21e5a) : s == 'warning' ? Colors.orange : const Color(0xFF3E35A5);
 
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_alerts.isEmpty) return const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Icon(Icons.check_circle_outline, size: 48, color: Colors.green),
-      SizedBox(height: 8), Text('Nta burira bushya. Byose ni byiza!'),
+      Icon(Icons.check_circle_outline, size: 48, color: Color(0xFF00d084)),
+      SizedBox(height: 12), Text('Nta burira bushya. Byose ni byiza!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
     ]));
     return ListView.builder(
       padding: const EdgeInsets.all(12),
@@ -66,10 +66,21 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   Text(recommendation),
                   const SizedBox(height: 12),
                   SizedBox(width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: () => _showActionDialog(a),
-                      icon: const Icon(Icons.check),
-                      label: const Text('Yemera & Andika Ingamba Wafashe'),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFFef295d), Color(0xFFa22891)]),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () => _showActionDialog(a),
+                        icon: const Icon(Icons.check),
+                        label: const Text('Yemera & Andika Ingamba Wafashe', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
                     ),
                   ),
                 ],

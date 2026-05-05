@@ -151,6 +151,8 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+        indicatorColor: cs.secondaryContainer,
+        backgroundColor: cs.surface,
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined),    selectedIcon: Icon(Icons.home),        label: 'Ahabanza'),
           NavigationDestination(icon: Icon(Icons.group_outlined),   selectedIcon: Icon(Icons.group),       label: 'Abana'),
@@ -265,9 +267,9 @@ class _DashboardTab extends StatelessWidget {
               Text('Ibarura ry\'Uyu Munsi', style: TextStyle(fontWeight: FontWeight.bold, color: cs.primary)),
               const SizedBox(height: 12),
               Row(children: [
-                _StatChip(icon: Icons.check_circle, colour: Colors.green, label: 'Bari hano', value: presentToday),
+                _StatChip(icon: Icons.check_circle, colour: const Color(0xFF00d084), label: 'Bari hano', value: presentToday),
                 const SizedBox(width: 12),
-                _StatChip(icon: Icons.cancel, colour: Colors.red, label: 'Batahari', value: absentToday),
+                _StatChip(icon: Icons.cancel, colour: const Color(0xFFe21e5a), label: 'Batahari', value: absentToday),
               ]),
             ]),
           )),
@@ -339,13 +341,21 @@ class _QuickActionButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: cs.primaryContainer,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
+          boxShadow: [
+            BoxShadow(
+              color: cs.shadow.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            )
+          ]
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, color: cs.onPrimaryContainer, size: 26),
+          Icon(icon, color: cs.primary, size: 26),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: cs.onPrimaryContainer, fontSize: 11),
+          Text(label, style: TextStyle(color: cs.onSurface, fontSize: 11, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center),
         ]),
       ),
@@ -359,7 +369,7 @@ class _AlertCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final severity = alert['severity'] as String? ?? 'warning';
-    final colour   = severity == 'urgent' ? Colors.red : (severity == 'warning' ? Colors.orange : Colors.blue);
+    final colour   = severity == 'urgent' ? const Color(0xFFe21e5a) : (severity == 'warning' ? Colors.orange : const Color(0xFF3E35A5));
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -387,7 +397,7 @@ class _OverdueCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 6),
       child: ListTile(
-        leading: Icon(Icons.schedule, color: reason == 'overdue' ? Colors.red : Colors.orange),
+        leading: Icon(Icons.schedule, color: reason == 'overdue' ? const Color(0xFFe21e5a) : Colors.orange),
         title: Text(child['full_name'] as String? ?? ''),
         subtitle: Text('$days days since last measurement'),
         trailing: StatusBadge(status: reason == 'overdue' ? 'at_risk' : 'normal', compact: true),

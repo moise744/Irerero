@@ -60,49 +60,49 @@ class StatusBadge extends StatelessWidget {
     switch (s) {
       case 'sam':
         return _StatusConfig(
-          bgColour: const Color(0xFFFEE2E2), textColour: const Color(0xFF991B1B),
+          bgColour: const Color(0xFFe21e5a).withOpacity(0.1), textColour: const Color(0xFFe21e5a),
           icon: Icons.warning_rounded,
           label: 'Severe Malnutrition', shortLabel: 'SAM',
           sublabel: 'Needs urgent medical care',
         );
       case 'mam':
         return _StatusConfig(
-          bgColour: const Color(0xFFFEF9C3), textColour: const Color(0xFF9A3412),
+          bgColour: Colors.orange.withOpacity(0.1), textColour: Colors.deepOrange,
           icon: Icons.warning_amber_rounded,
           label: 'Moderate Malnutrition', shortLabel: 'MAM',
           sublabel: 'Needs feeding support',
         );
       case 'severely_stunted':
         return _StatusConfig(
-          bgColour: const Color(0xFFFEE2E2), textColour: const Color(0xFF991B1B),
+          bgColour: const Color(0xFFe21e5a).withOpacity(0.1), textColour: const Color(0xFFe21e5a),
           icon: Icons.height,
           label: 'Severely Stunted', shortLabel: 'Sev. Stunted',
           sublabel: 'Refer to health centre',
         );
       case 'stunted':
         return _StatusConfig(
-          bgColour: const Color(0xFFFEF9C3), textColour: const Color(0xFF9A3412),
+          bgColour: Colors.orange.withOpacity(0.1), textColour: Colors.deepOrange,
           icon: Icons.height,
           label: 'Stunted', shortLabel: 'Stunted',
           sublabel: 'Check nutrition and feeding',
         );
       case 'underweight':
         return _StatusConfig(
-          bgColour: const Color(0xFFFEF9C3), textColour: const Color(0xFF9A3412),
+          bgColour: Colors.orange.withOpacity(0.1), textColour: Colors.deepOrange,
           icon: Icons.scale,
           label: 'Underweight', shortLabel: 'Underweight',
           sublabel: 'Review diet and feeding',
         );
       case 'at_risk':
         return _StatusConfig(
-          bgColour: const Color(0xFFFEF9C3), textColour: const Color(0xFF9A3412),
+          bgColour: Colors.orange.withOpacity(0.1), textColour: Colors.deepOrange,
           icon: Icons.info_outline,
           label: 'Watch Closely', shortLabel: 'At Risk',
           sublabel: 'Slightly below healthy range',
         );
       default:
         return _StatusConfig(
-          bgColour: const Color(0xFFDCFCE7), textColour: const Color(0xFF166534),
+          bgColour: const Color(0xFF00d084).withOpacity(0.1), textColour: const Color(0xFF00d084),
           icon: Icons.check_circle_outline,
           label: 'Healthy', shortLabel: 'Normal',
           sublabel: 'Growing well',

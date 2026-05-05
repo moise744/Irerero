@@ -52,22 +52,43 @@ class _ChildListScreenState extends State<ChildListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const RegisterChildScreen()),
-          );
-          _load();
-        },
-        icon: const Icon(Icons.person_add_alt_1),
-        label: const Text('Andika Umwana'),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFFef295d), Color(0xFFa22891)]),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFef295d).withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          onPressed: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const RegisterChildScreen()),
+            );
+            _load();
+          },
+          icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
+          label: const Text('Andika Umwana', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
       ),
       body: Column(children: [
         Padding(
           padding: const EdgeInsets.all(12),
           child: SearchBar(
             hintText: 'Shakisha umwana...',
-            leading: const Icon(Icons.search),
+            leading: Icon(Icons.search, color: Theme.of(context).colorScheme.primary),
+            backgroundColor: WidgetStateProperty.all(Colors.white),
+            elevation: WidgetStateProperty.all(1),
+            shape: WidgetStateProperty.all(RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
+            )),
             onChanged: (v) { _search = v; _load(); },
           ),
         ),
@@ -81,7 +102,11 @@ class _ChildListScreenState extends State<ChildListScreen> {
                     final childUuid = (c['uuid'] as String?) ?? '';
                     final status = _statusByChild[childUuid] ?? 'unmeasured';
                     return ListTile(
-                      leading: CircleAvatar(child: Text((c['full_name'] as String? ?? '?')[0].toUpperCase())),
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                        child: Text((c['full_name'] as String? ?? '?')[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
                       title: Text(c['full_name'] as String? ?? ''),
                       subtitle: Text(c['irerero_id'] as String? ?? ''),
                       trailing: StatusBadge(status: status, compact: true),
