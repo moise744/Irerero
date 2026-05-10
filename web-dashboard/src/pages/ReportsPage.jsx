@@ -99,7 +99,7 @@ export default function ReportsPage() {
                 disabled={generating}
                 className="relative z-10 px-5 py-2.5 bg-white text-teal-700 font-semibold rounded-lg shadow-md transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50"
               >
-                {generating ? 'Generating…' : 'Generate This Month's Report'}
+                {generating ? 'Generating…' : "Generate This Month's Report"}
               </button>
             )}
           </div>
