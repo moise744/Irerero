@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart'; // Added for PDF downloads
 import '../../db/database_helper.dart';
 import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
+import '../../widgets/empty_state.dart';
 
 class ReferralScreen extends StatefulWidget {
   const ReferralScreen({super.key});
@@ -84,22 +85,12 @@ class _ReferralScreenState extends State<ReferralScreen>
   Widget _buildReferralList(List<Map<String, dynamic>> referrals,
       {required bool isPending}) {
     if (referrals.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isPending ? Icons.hourglass_empty : Icons.check_circle_outline,
-              size: 64,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isPending ? 'No pending referrals' : 'No completed referrals',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-            ),
-          ],
-        ),
+      return EmptyStateWidget(
+        icon: isPending ? Icons.hourglass_empty : Icons.check_circle_outline,
+        title: isPending ? 'No pending referrals' : 'No completed referrals',
+        message: isPending 
+            ? 'There are currently no referrals awaiting outcomes.' 
+            : 'You haven\'t completed any referrals yet.',
       );
     }
 

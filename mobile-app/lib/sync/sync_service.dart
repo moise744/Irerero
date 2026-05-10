@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../db/database_helper.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 enum SyncStatus { idle, syncing, synced, error }
 
@@ -244,6 +245,17 @@ class SyncService extends ChangeNotifier {
       'generated_at':      alert['generated_at'] ?? DateTime.now().toIso8601String(),
       'status':            'active',
     });
+
+    final alertType = alert['alert_type'] ?? 'New Alert';
+    final severity = alert['severity'] ?? 'warning';
+    final explanation = alert['explanation_en'] ?? 'Please check the app for details.';
+
+    // Only notify if it's an urgent or new alert (we notify on all active ones received in this batch)
+    await NotificationService().showNotification(
+      id: alert['id'].hashCode,
+      title: 'Irerero Alert: $alertType',
+      body: explanation,
+    );
   }
 
   Future<void> _refreshPendingCount() async {

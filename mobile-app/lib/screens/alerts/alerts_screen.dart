@@ -3,6 +3,7 @@
 // No Z-scores in display — AI-FR-017
 import 'package:flutter/material.dart';
 import '../../db/database_helper.dart';
+import '../../widgets/empty_state.dart';
 
 class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
@@ -32,10 +33,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_alerts.isEmpty) return const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Icon(Icons.check_circle_outline, size: 48, color: Color(0xFF00d084)),
-      SizedBox(height: 12), Text('Nta burira bushya. Byose ni byiza!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
-    ]));
+    if (_alerts.isEmpty) return const EmptyStateWidget(
+      icon: Icons.check_circle_outline,
+      title: 'Byiza cyane!',
+      message: 'Nta burira bushya buhari. Abana bose bameze neza.',
+    );
     return ListView.builder(
       padding: const EdgeInsets.all(12),
       itemCount: _alerts.length,

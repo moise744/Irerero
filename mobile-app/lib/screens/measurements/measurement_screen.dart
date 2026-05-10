@@ -51,7 +51,21 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
   @override
   void initState() {
     super.initState();
+    _initPosition();
     _initDevice();
+  }
+
+  void _initPosition() {
+    final dobStr = widget.child['date_of_birth'] as String?;
+    if (dobStr != null && dobStr.isNotEmpty) {
+      final dob = DateTime.tryParse(dobStr);
+      if (dob != null) {
+        final ageMonths = DateTime.now().difference(dob).inDays ~/ 30;
+        _position = ageMonths >= 24 ? 'standing' : 'lying';
+      }
+    } else {
+      _position = 'standing';
+    }
   }
 
   Future<void> _initDevice() async {

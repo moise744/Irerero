@@ -13,6 +13,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'db/database_helper.dart';
 import 'services/auth_service.dart';
+import 'services/notification_service.dart';
 import 'sync/sync_service.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/auth/login_screen.dart';
@@ -43,6 +44,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await DatabaseHelper.instance.init();
+  await NotificationService().init();
 
   final authService = AuthService();
   await authService.restoreSession();
