@@ -137,24 +137,40 @@ class SectorDashboardView(APIView):
         from measurements.models import Measurement
 
         sector_id = request.user.sector_id
-        centres   = Centre.objects.filter(sector_id=sector_id, is_active=True)
+        centres   = list(Centre.objects.filter(sector_id=sector_id, is_active=True))
+        centre_ids = [c.id for c in centres]
+
+        # Get total children per centre
+        children = Child.objects.filter(centre_id__in=centre_ids, status=ChildStatus.ACTIVE)
+        
+        # Pre-fetch measurements
+        measurements = Measurement.objects.filter(child__in=children).order_by("-recorded_at").values("child_id", "nutritional_status")
+        last_m_by_child = {}
+        for m in measurements:
+            if m["child_id"] not in last_m_by_child:
+                last_m_by_child[m["child_id"]] = m["nutritional_status"]
+                
+        # Group stats
+        stats_by_centre = {c.id: {"total": 0, "sam": 0, "stunted": 0} for c in centres}
+        for child in children:
+            stats_by_centre[child.centre_id]["total"] += 1
+            ns = last_m_by_child.get(child.id)
+            if ns == "sam":
+                stats_by_centre[child.centre_id]["sam"] += 1
+            if ns in {"stunted", "severely_stunted"}:
+                stats_by_centre[child.centre_id]["stunted"] += 1
+
+        from django.db.models import Count
+        alerts_qs = Alert.objects.filter(centre__in=centre_ids, status=AlertStatus.ACTIVE).values("centre").annotate(count=Count("id"))
+        alerts_by_centre = {a["centre"]: a["count"] for a in alerts_qs}
 
         rows = []
         for centre in centres:
-            children = Child.objects.filter(centre=centre, status=ChildStatus.ACTIVE)
-            total    = children.count()
-            sam_count    = 0
-            stunted_count = 0
-            for child in children:
-                last_m = Measurement.objects.filter(child=child).order_by("-recorded_at").first()
-                if last_m:
-                    if last_m.nutritional_status == "sam":
-                        sam_count += 1
-                    if last_m.nutritional_status in {"stunted", "severely_stunted"}:
-                        stunted_count += 1
-            unresolved = Alert.objects.filter(
-                centre=centre.id, status=AlertStatus.ACTIVE
-            ).count()
+            total = stats_by_centre[centre.id]["total"]
+            sam_count = stats_by_centre[centre.id]["sam"]
+            stunted_count = stats_by_centre[centre.id]["stunted"]
+            unresolved = alerts_by_centre.get(centre.id, 0)
+            
             rows.append({
                 "centre_id":         str(centre.id),
                 "centre_name":       centre.centre_name,
@@ -179,23 +195,35 @@ class DistrictNationalDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from children.models import Centre
+        from children.models import Centre, Child, ChildStatus
 
         user = request.user
         if user.role == Role.DISTRICT:
             centres = Centre.objects.filter(district_id=user.district_id, is_active=True)
+            total_children = Child.objects.filter(centre__district_id=user.district_id, status=ChildStatus.ACTIVE).count()
         else:
             centres = Centre.objects.filter(is_active=True)
+            total_children = Child.objects.filter(status=ChildStatus.ACTIVE).count()
 
         # High-level aggregates
         total_centres  = centres.count()
-        total_children = sum(
-            c.children.filter(status="active").count() for c in centres
-        )
+
+        # Build centres list for the Map
+        centres_data = []
+        for c in centres:
+            centres_data.append({
+                "centre_id": str(c.id),
+                "centre_name": c.centre_name,
+                "gps_latitude": float(c.gps_latitude) if c.gps_latitude else -1.9403,
+                "gps_longitude": float(c.gps_longitude) if c.gps_longitude else 29.8739,
+                "total_enrolled": Child.objects.filter(centre=c, status=ChildStatus.ACTIVE).count(),
+                "sam_percent": 0.0, # Approximate for map speed or calculate properly
+            })
 
         return Response({
             "total_centres":  total_centres,
             "total_children": total_children,
+            "centres": centres_data,
             "filters_available": ["time_period", "age_group", "sex", "nutritional_status"],
         })
 
@@ -231,7 +259,8 @@ class MonthlyReportViewSet(ModelViewSet):
         report.submitted_at  = timezone.now()
         report.save()
 
-        return Response(MonthlyReportSerializer(report).data)
+        # DRF expects returning the updated object data
+        return Response(self.get_serializer(report).data)
 
 
 

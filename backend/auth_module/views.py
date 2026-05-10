@@ -204,9 +204,10 @@ def remote_wipe_view(request, pk):
     if not target:
         return Response({"detail": "User not found."}, status=404)
     # Set a flag the mobile app polls — actual wipe happens on device
+    target.requires_remote_wipe = True
     target.fcm_token = ""   # Also clear FCM so no more push notifications
     target.is_active = False
-    target.save(update_fields=["fcm_token", "is_active"])
+    target.save(update_fields=["requires_remote_wipe", "fcm_token", "is_active"])
     _log(request.user, "user.remote_wipe", record_id=pk, request=request)
     return Response({"detail": "Remote wipe scheduled. Device will erase data on next connectivity."})
 

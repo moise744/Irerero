@@ -56,6 +56,7 @@ const baseLinks = [
   { to: '/', label: 'Dashboard', icon: 'home', end: true },
   { to: '/children', label: 'Children', icon: 'children', end: false },
   { to: '/alerts', label: 'Alerts', icon: 'alerts', end: false },
+  { to: '/referrals', label: 'Referrals', icon: 'alerts', end: false },
   { to: '/sms-inbox', label: 'SMS Inbox', icon: 'sms', end: false },
   { to: '/reports', label: 'Reports', icon: 'reports', end: false },
 ]

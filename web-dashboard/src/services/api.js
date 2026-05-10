@@ -55,6 +55,10 @@ export const alertsApi = {
   action: (id,txt) => api.patch(`/alerts/${id}/action/`, {action_taken:txt}),
 }
 
+export const referralsApi = {
+  list:   p  => api.get('/referrals/', {params:p}),
+}
+
 export const smsApi = {
   log:   p    => api.get('/notifications/sms-log/', {params:p}),
   batch: data => api.post('/notifications/sms/batch/', data),

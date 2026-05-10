@@ -199,6 +199,19 @@ class SyncService extends ChangeNotifier {
         return {'accepted': accepted, 'conflicts': conflicts};
       }
 
+      if (res.statusCode == 423) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        if (data['action'] == 'wipe') {
+          print('!!! REMOTE WIPE REQUESTED BY SERVER !!!');
+          await DatabaseHelper.instance.clearAllData();
+          auth.logout();
+          _status = SyncStatus.error;
+          _lastError = 'Device wiped by administrator.';
+          notifyListeners();
+          return {'error': 'wipe'};
+        }
+      }
+
       throw Exception('Server returned ${res.statusCode}: ${res.body}');
     } catch (e) {
       print('================ SYNC ERROR ================');

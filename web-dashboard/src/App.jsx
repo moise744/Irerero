@@ -19,6 +19,7 @@ import FoodStockPage from './pages/FoodStockPage'
 import SmsCampaignPage from './pages/SmsCampaignPage'
 import AdminToolsPage from './pages/AdminToolsPage'
 import ReportBuilderPage from './pages/ReportBuilderPage'
+import ReferralsPage from './pages/ReferralsPage'
 
 /** P7: Wait for /auth/me when a token exists — handles 401 gracefully. */
 function useAuthBootstrap() {
@@ -138,6 +139,7 @@ export default function App() {
           <Route path="reports" element={<ReportsPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="staff" element={<StaffManagementPage />} />
+          <Route path="referrals" element={<ReferralsPage />} />
           <Route path="sync-conflicts" element={<SyncConflictsPage />} />
           <Route path="food-stock" element={<FoodStockPage />} />
           <Route path="sms-campaign" element={<SmsCampaignPage />} />

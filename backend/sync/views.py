@@ -49,6 +49,9 @@ class SyncView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        if getattr(request.user, "requires_remote_wipe", False):
+            return Response({"action": "wipe", "detail": "Device wipe requested by Administrator."}, status=423)
+
         payload   = request.data
         records   = payload.get("records", [])
         device_id = payload.get("device_id", "unknown")

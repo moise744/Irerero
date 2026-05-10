@@ -260,4 +260,14 @@ class DatabaseHelper {
     final db = await database;
     await db.execute(sql, args);
   }
+
+  Future<void> clearAllData() async {
+    final db = await database;
+    final tables = ['measurements', 'attendance', 'alerts', 'referrals', 'nutrition_programmes', 'meal_records', 'food_intake_flags', 'immunisation', 'milestones', 'sync_queue', 'children', 'users_cache', 'lms_tables'];
+    await db.transaction((txn) async {
+      for (final table in tables) {
+        await txn.delete(table);
+      }
+    });
+  }
 }

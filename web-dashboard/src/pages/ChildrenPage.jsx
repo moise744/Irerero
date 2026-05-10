@@ -368,11 +368,20 @@ export default function ChildrenPage() {
           <div className="flex-1 overflow-y-auto bg-gray-50">
             <div className="bg-white border-b px-6 py-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-800">{childDetail?.full_name || selected.full_name}</h2>
-                  <p className="text-sm text-gray-500">
-                    {(childDetail?.irerero_id || selected.irerero_id)} · {(childDetail?.age_months ?? selected.age_months)} months · {(childDetail?.sex || selected.sex)} · {(childDetail?.centre_name || selected.centre_name)}
-                  </p>
+                <div className="flex items-center gap-4">
+                  {childDetail?.photo || selected.photo ? (
+                    <img src={childDetail?.photo || selected.photo} alt={childDetail?.full_name || selected.full_name} className="w-14 h-14 rounded-full object-cover border-2 border-stone-100 shadow-sm" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border-2 border-stone-200">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">{childDetail?.full_name || selected.full_name}</h2>
+                    <p className="text-sm text-gray-500">
+                      {(childDetail?.irerero_id || selected.irerero_id)} · {(childDetail?.age_months ?? selected.age_months)} months · {(childDetail?.sex || selected.sex)} · {(childDetail?.centre_name || selected.centre_name)}
+                    </p>
+                  </div>
                 </div>
                 <StatusBadge status={childDetail?.nutritional_status || selected.nutritional_status || 'normal'} />
               </div>

@@ -59,6 +59,7 @@ class IreroUser(AbstractBaseUser, PermissionsMixin):
     is_active       = models.BooleanField(default=True)
     is_staff        = models.BooleanField(default=False)
     last_login      = models.DateTimeField(null=True, blank=True)
+    requires_remote_wipe = models.BooleanField(default=False)
 
     # Failed login tracking — FR-005 (lock after 5 attempts)
     failed_login_count = models.IntegerField(default=0)
