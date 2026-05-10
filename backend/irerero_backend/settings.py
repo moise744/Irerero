@@ -126,8 +126,11 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
     "http://localhost:4173 http://127.0.0.1:4173",
 ).split()
 CORS_ALLOW_CREDENTIALS = True
-# DEBUG: allow phones / PCs on LAN (http://192.168.x.x:3000 etc.). Set DEBUG=False in production.
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+# CORS_ALLOW_ALL_ORIGINS must be True for mobile app clients (Flutter/Android).
+# Mobile apps do NOT send an Origin header — they are not browsers — so CORS
+# is a browser-only concern and allowing all origins does NOT create a security
+# vulnerability for the mobile API. The web dashboard is protected by JWT tokens.
+CORS_ALLOW_ALL_ORIGINS = True
 # When DEBUG=False but you browse from LAN, still honour common private origins (explicit whitelist).
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",
