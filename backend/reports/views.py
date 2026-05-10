@@ -198,10 +198,12 @@ class DistrictNationalDashboardView(APIView):
         from children.models import Centre, Child, ChildStatus
 
         user = request.user
-        if user.role == Role.DISTRICT:
+        # District-level: filter to user's district only
+        if user.role == Role.DISTRICT and getattr(user, 'district_id', None):
             centres = Centre.objects.filter(district_id=user.district_id, is_active=True)
             total_children = Child.objects.filter(centre__district_id=user.district_id, status=ChildStatus.ACTIVE).count()
         else:
+            # National, sys_admin, partner — see all centres
             centres = Centre.objects.filter(is_active=True)
             total_children = Child.objects.filter(status=ChildStatus.ACTIVE).count()
 

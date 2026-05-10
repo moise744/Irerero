@@ -14,10 +14,10 @@ def _save_pdf(html_content: str, filename: str) -> str:
         output_path = media_dir / filename
         HTML(string=html_content, base_url=str(settings.BASE_DIR)).write_pdf(str(output_path))
         return f"pdfs/{filename}"
-    except (ImportError, OSError):
-        # WeasyPrint on Windows commonly fails at runtime if GTK/Pango libs
-        # (e.g., gobject-2.0-0) are missing. For demo environments, fall back
-        # to saving HTML so the slip/report is still printable/viewable.
+    except Exception:
+        # WeasyPrint may fail on some server environments (e.g. missing GTK/Pango
+        # libraries on Windows, or Python 3.14 incompatibilities with older releases).
+        # Fall back to saving HTML so the slip/report is still printable/viewable.
         media_dir = Path(settings.MEDIA_ROOT) / "pdfs"
         media_dir.mkdir(parents=True, exist_ok=True)
         html_path = media_dir / filename.replace(".pdf", ".html")
