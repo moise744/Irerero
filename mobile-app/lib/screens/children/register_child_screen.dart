@@ -28,6 +28,7 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
   String _sex = 'female';
   bool _saving = false;
   bool _consentGiven = false; 
+  bool _consentScreenShown = true;
   XFile? _photo; 
   final ImagePicker _picker = ImagePicker();
 
@@ -162,6 +163,43 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_consentScreenShown) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Uburenganzira')),
+        body: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.privacy_tip, size: 64, color: Color(0xFF3E35A5)),
+              const SizedBox(height: 24),
+              const Text('Kwemeza Uburenganzira bw\'Umubyeyi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              const Text('Hakurikijwe itegeko rya Rwanda Law No. 058/2021, ugomba gusaba umubyeyi cyangwa umurera uburenganzira mbere yo kwinjiza amakuru y\'umwana muri sisitemu.', textAlign: TextAlign.center),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                  onPressed: () => setState(() { _consentGiven = true; _consentScreenShown = false; }),
+                  child: const Text('Nabyumvise, Umubyeyi yabyemeye'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Simbifitiye uburenganzira'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Andika Umwana')),
       body: Form(
@@ -229,18 +267,7 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
               decoration: const InputDecoration(labelText: 'Umudugudu', border: OutlineInputBorder()),
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Andika umudugudu.' : null,
             ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
-              child: CheckboxListTile(
-                value: _consentGiven,
-                onChanged: (v) => setState(() => _consentGiven = v ?? false),
-                title: const Text('Ndemeza ko umubyeyi yatanze uburenganzira bwo kubika amakuru y\'ubuzima bw\'umwana (Rwanda Law No. 058/2021).', style: TextStyle(fontSize: 12)),
-                controlAffinity: ListTileControlAffinity.leading,
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             SizedBox(
               height: 52,
               child: FilledButton.icon(

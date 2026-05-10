@@ -320,7 +320,7 @@ class _NutritionTab extends StatelessWidget {
         const Icon(Icons.restaurant, size: 48, color: Color(0xFF00d084)),
         const SizedBox(height: 12),
         FilledButton.icon(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NutritionScreen())),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => NutritionScreen(childUuid: child['uuid']))),
           icon: const Icon(Icons.open_in_new), label: const Text('Fungura Indyo'),
         ),
         const SizedBox(height: 24),
@@ -389,7 +389,7 @@ class _ReferralsTab extends StatelessWidget {
         Icon(Icons.local_hospital, size: 48, color: Theme.of(context).colorScheme.primary),
         const SizedBox(height: 12),
         FilledButton.icon(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ReferralScreen())),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ReferralScreen(childUuid: child['uuid']))),
           icon: const Icon(Icons.open_in_new), label: const Text('Fungura Referrals'),
         ),
       ]),
@@ -398,33 +398,50 @@ class _ReferralsTab extends StatelessWidget {
 }
 
 // ── Tab 5: Alerts ────────────────────────────────────────────────────────
-class _AlertsTab extends StatelessWidget {
+class _AlertsTab extends StatefulWidget {
   final Map<String, dynamic> child;
   const _AlertsTab({required this.child});
+  @override State<_AlertsTab> createState() => _AlertsTabState();
+}
+
+class _AlertsTabState extends State<_AlertsTab> {
   @override Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: DatabaseHelper.instance.query('alerts', where: 'child_uuid = ?', whereArgs: [child['uuid']], orderBy: "CASE severity WHEN 'urgent' THEN 0 WHEN 'warning' THEN 1 ELSE 2 END ASC, generated_at DESC"),
+      future: DatabaseHelper.instance.query('alerts', where: 'child_uuid = ?', whereArgs: [widget.child['uuid']], orderBy: "CASE status WHEN 'resolved' THEN 3 WHEN 'active' THEN 0 ELSE 1 END ASC, CASE severity WHEN 'urgent' THEN 0 WHEN 'warning' THEN 1 ELSE 2 END ASC, generated_at DESC"),
       builder: (ctx, snap) {
         if (!snap.hasData) return const Center(child: CircularProgressIndicator());
         final rows = snap.data!;
         if (rows.isEmpty) return const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.check_circle_outline, size: 48, color: Color(0xFF00d084)), SizedBox(height: 8), Text('Nta burira kuri uyu mwana.')]));
-        Color colour(String s) => s == 'urgent' ? const Color(0xFFe21e5a) : s == 'warning' ? Colors.orange : const Color(0xFF3E35A5);
+        Color colour(String s, String status) => status == 'resolved' ? Colors.grey : (s == 'urgent' ? const Color(0xFFe21e5a) : s == 'warning' ? Colors.orange : const Color(0xFF3E35A5));
         return ListView.builder(
           padding: const EdgeInsets.all(12),
           itemCount: rows.length,
           itemBuilder: (_, i) {
             final a = rows[i];
             final sev = a['severity'] as String? ?? 'warning';
+            final status = a['status'] as String? ?? 'active';
+            final isResolved = status == 'resolved';
             return Card(
               margin: const EdgeInsets.only(bottom: 10),
               child: ExpansionTile(
-                leading: Icon(Icons.warning_rounded, color: colour(sev)),
-                title: Text(a['explanation_rw'] as String? ?? a['explanation_en'] as String? ?? '', maxLines: 2, overflow: TextOverflow.ellipsis),
-                subtitle: Text(sev.toUpperCase(), style: TextStyle(color: colour(sev), fontWeight: FontWeight.bold, fontSize: 11)),
+                leading: Icon(isResolved ? Icons.check_circle : Icons.warning_rounded, color: colour(sev, status)),
+                title: Text(a['explanation_rw'] as String? ?? a['explanation_en'] as String? ?? '', maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(decoration: isResolved ? TextDecoration.lineThrough : null)),
+                subtitle: Text(isResolved ? 'RESOLVED' : sev.toUpperCase(), style: TextStyle(color: colour(sev, status), fontWeight: FontWeight.bold, fontSize: 11)),
                 children: [
                   Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     const Text('Ingamba:', style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4), Text(a['recommendation_rw'] as String? ?? a['recommendation_en'] as String? ?? ''),
+                    if (!isResolved) ...[
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        onPressed: () async {
+                           await DatabaseHelper.instance.update('alerts', {'status': 'resolved', 'synced_at': null}, where: 'uuid = ?', whereArgs: [a['uuid']]);
+                           setState(() {});
+                        },
+                        icon: const Icon(Icons.check),
+                        label: const Text('Mark Actioned'),
+                      )
+                    ]
                   ]))
                 ],
               ),
@@ -461,12 +478,24 @@ class _ImmunisationTabState extends State<_ImmunisationTab> {
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: () async {
-                final vaccines = ['BCG, OPV0', 'Polio 1, DTP 1', 'Measles 1'];
+                final vaccines = [
+                  'BCG (Birth)', 'OPV 0 (Birth)',
+                  'OPV 1 (6w)', 'Pentavalent 1 (6w)', 'PCV 1 (6w)', 'Rota 1 (6w)',
+                  'OPV 2 (10w)', 'Pentavalent 2 (10w)', 'PCV 2 (10w)', 'Rota 2 (10w)',
+                  'OPV 3 (14w)', 'Pentavalent 3 (14w)', 'PCV 3 (14w)', 'Rota 3 (14w)',
+                  'Measles/Rubella 1 (9m)',
+                  'Measles/Rubella 2 (15m)',
+                ];
+                final intervals = [0, 0, 42, 42, 42, 42, 70, 70, 70, 70, 98, 98, 98, 98, 274, 456];
+                
+                final dobStr = widget.child['date_of_birth'] as String?;
+                final dob = dobStr != null ? DateTime.tryParse(dobStr) ?? DateTime.now() : DateTime.now();
+                
                 for (int i=0; i<vaccines.length; i++) {
                   await DatabaseHelper.instance.insert('immunisation', {
                     'uuid': const Uuid().v4(), 'child_uuid': widget.child['uuid'],
                     'vaccine_name': vaccines[i], 'status': 'due',
-                    'scheduled_date': DateTime.now().add(Duration(days: 30 * i)).toIso8601String().substring(0, 10)
+                    'scheduled_date': dob.add(Duration(days: intervals[i])).toIso8601String().substring(0, 10)
                   });
                 }
                 setState(() {});
@@ -523,7 +552,15 @@ class _MilestonesTabState extends State<_MilestonesTab> {
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: () async {
-                final bands = {'0-6m': 'Social smile, Head control', '6-12m': 'Sitting, Crawling', '12-24m': 'Walking, First words'};
+                final bands = {
+                  '0-6m': 'Social smile, Head control, Reaches for objects',
+                  '6-12m': 'Sitting, Crawling, Stands with support, Pincer grasp',
+                  '12-24m': 'Walking alone, First words, Points to things',
+                  '24-36m': 'Runs well, Two-word phrases, Helps undress',
+                  '3-4y': 'Hops on one foot, Names colours, Plays with others',
+                  '4-5y': 'Draws a person, Counts to 10, Dresses self',
+                  '5-6y': 'Catches a ball, Knows alphabet, Follows rules'
+                };
                 final now = DateTime.now().toIso8601String().substring(0, 10);
                 for (final band in bands.entries) {
                   await DatabaseHelper.instance.insert('milestones', {

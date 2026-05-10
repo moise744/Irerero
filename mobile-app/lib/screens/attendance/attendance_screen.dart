@@ -58,8 +58,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final uuid = const Uuid();
     for (final child in _children) {
       final childId = child['uuid'] as String;
+      
+      final existing = await DatabaseHelper.instance.query('attendance',
+          where: 'child_uuid = ? AND date = ?', whereArgs: [childId, _today]);
+      
+      final recordUuid = existing.isNotEmpty ? (existing.first['uuid'] as String) : uuid.v4();
+      
       final record  = {
-        'uuid':           uuid.v4(),
+        'uuid':           recordUuid,
         'child_uuid':     childId,
         'date':           _today,
         'status':         _status[childId] ?? 'absent',
@@ -67,7 +73,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         'recorded_by':    auth.userId ?? '',
         'recorded_at':    DateTime.now().toIso8601String(),
       };
-      await DatabaseHelper.instance.insert('attendance', record);
+      
+      if (existing.isNotEmpty) {
+        await DatabaseHelper.instance.update('attendance', {
+          'status': record['status'],
+          'absence_reason': record['absence_reason'],
+          'recorded_by': record['recorded_by'],
+          'recorded_at': record['recorded_at'],
+        }, where: 'uuid = ?', whereArgs: [recordUuid]);
+      } else {
+        await DatabaseHelper.instance.insert('attendance', record);
+      }
+      
       await sync.enqueue(entityType: 'attendance', entityUuid: record['uuid']!, payload: {
         'child_id': childId, 'date': _today,
         'status': record['status'], 'absence_reason': record['absence_reason'],

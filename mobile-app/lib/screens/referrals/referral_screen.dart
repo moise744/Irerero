@@ -14,7 +14,8 @@ import '../../sync/sync_service.dart';
 import '../../widgets/empty_state.dart';
 
 class ReferralScreen extends StatefulWidget {
-  const ReferralScreen({super.key});
+  final String? childUuid;
+  const ReferralScreen({super.key, this.childUuid});
 
   @override
   State<ReferralScreen> createState() => _ReferralScreenState();
@@ -36,7 +37,9 @@ class _ReferralScreenState extends State<ReferralScreen>
 
   Future<void> _loadReferrals() async {
     final db = DatabaseHelper.instance;
-    final all = await db.query('referrals', orderBy: 'referral_date DESC');
+    final all = widget.childUuid != null
+        ? await db.query('referrals', where: 'child_uuid = ?', whereArgs: [widget.childUuid], orderBy: 'referral_date DESC')
+        : await db.query('referrals', orderBy: 'referral_date DESC');
     if (!mounted) return;
     setState(() {
       _pending = all.where((r) => r['status'] == 'pending').toList();
@@ -113,8 +116,9 @@ class _ReferralScreenState extends State<ReferralScreen>
   }
 
   Future<void> _showNewReferralDialog(BuildContext context) async {
-    final children =
-        await DatabaseHelper.instance.query('children', orderBy: 'full_name ASC');
+    final children = widget.childUuid != null
+        ? await DatabaseHelper.instance.query('children', where: 'uuid = ?', whereArgs: [widget.childUuid])
+        : await DatabaseHelper.instance.query('children', orderBy: 'full_name ASC');
 
     if (!context.mounted) return;
 
@@ -124,7 +128,7 @@ class _ReferralScreenState extends State<ReferralScreen>
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          builder: (ctx) => _NewReferralSheet(children: children),
+          builder: (ctx) => _NewReferralSheet(children: children, initialChildUuid: widget.childUuid),
         ) ??
         false;
 
@@ -148,7 +152,8 @@ class _ReferralScreenState extends State<ReferralScreen>
 
 class _NewReferralSheet extends StatefulWidget {
   final List<Map<String, dynamic>> children;
-  const _NewReferralSheet({required this.children});
+  final String? initialChildUuid;
+  const _NewReferralSheet({required this.children, this.initialChildUuid});
 
   @override
   State<_NewReferralSheet> createState() => _NewReferralSheetState();
@@ -165,6 +170,7 @@ class _NewReferralSheetState extends State<_NewReferralSheet> {
     super.initState();
     _reasonCtrl = TextEditingController();
     _centreCtrl = TextEditingController();
+    _selectedChildId = widget.initialChildUuid;
   }
 
   @override
@@ -191,6 +197,7 @@ class _NewReferralSheetState extends State<_NewReferralSheet> {
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             decoration: const InputDecoration(labelText: 'Select Child'),
+            value: _selectedChildId,
             items: widget.children
                 .where((c) => ((c['uuid'] as String?) ?? '').isNotEmpty)
                 .map(
@@ -200,7 +207,7 @@ class _NewReferralSheetState extends State<_NewReferralSheet> {
                   ),
                 )
                 .toList(),
-            onChanged: (v) => setState(() => _selectedChildId = v),
+            onChanged: widget.initialChildUuid != null ? null : (v) => setState(() => _selectedChildId = v),
           ),
           const SizedBox(height: 12),
           TextField(

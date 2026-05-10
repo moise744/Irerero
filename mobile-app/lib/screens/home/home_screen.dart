@@ -22,7 +22,9 @@ import '../attendance/attendance_screen.dart';
 import '../alerts/alerts_screen.dart';
 import '../sync/sync_status_screen.dart';
 import '../measurements/measurement_screen.dart';
+import '../measurements/batch_measurement_screen.dart';
 import '../settings/settings_screen.dart';
+import '../nutrition/meal_recording_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -121,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onOpenAttendance: () => setState(() => _selectedIndex = 2),
         onOpenMeasure: _openMeasurementPicker,
         onOpenAlerts:     () => setState(() => _selectedIndex = 3),
-        onOpenChildren:   () => setState(() => _selectedIndex = 1),
+        onOpenMeals:      () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MealRecordingScreen())),
       ),
       const ChildListScreen(),
       const AttendanceScreen(),
@@ -193,6 +195,13 @@ class _HomeScreenState extends State<HomeScreen> {
               title: Text('Hitamo umwana wo gupima',
                   style: TextStyle(fontWeight: FontWeight.bold)),
             ),
+            ListTile(
+              leading: const Icon(Icons.list_alt, color: Color(0xFF3E35A5)),
+              title: const Text('Batch Mode (Pima Abana Bose)'),
+              subtitle: const Text('Igipimo cya bose binyuranye'),
+              onTap: () => Navigator.pop(ctx, {'batch_mode': true}),
+            ),
+            const Divider(),
             SizedBox(
               height: 420,
               child: ListView.builder(
@@ -221,11 +230,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (!mounted || selected == null) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => MeasurementScreen(child: selected),
-      ),
-    );
+    if (selected['batch_mode'] == true) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => BatchMeasurementScreen(children: children),
+        ),
+      );
+    } else {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => MeasurementScreen(child: selected),
+        ),
+      );
+    }
     if (mounted) await _loadDashboardData();
   }
 }
@@ -239,7 +256,7 @@ class _DashboardTab extends StatelessWidget {
   final VoidCallback onOpenAttendance;
   final VoidCallback onOpenMeasure;
   final VoidCallback onOpenAlerts;
-  final VoidCallback onOpenChildren;
+  final VoidCallback onOpenMeals;
 
   const _DashboardTab({
     required this.alerts, required this.presentToday, required this.absentToday,
@@ -247,7 +264,7 @@ class _DashboardTab extends StatelessWidget {
     required this.onOpenAttendance,
     required this.onOpenMeasure,
     required this.onOpenAlerts,
-    required this.onOpenChildren,
+    required this.onOpenMeals,
   });
 
   @override
@@ -285,7 +302,7 @@ class _DashboardTab extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(child: _QuickActionButton(icon: Icons.notifications_active, label: 'Iburira', onTap: onOpenAlerts)),
             const SizedBox(width: 8),
-            Expanded(child: _QuickActionButton(icon: Icons.search, label: 'Abana', onTap: onOpenChildren)),
+            Expanded(child: _QuickActionButton(icon: Icons.restaurant, label: 'Amafunguro', onTap: onOpenMeals)),
           ]),
           const SizedBox(height: 16),
 

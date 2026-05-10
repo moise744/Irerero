@@ -227,8 +227,9 @@ class AuditLogListView(APIView):
 class CentreStaffView(APIView):
     """
     GET /api/v1/users/centre-staff/
-    POST /api/v1/users/centre-staff/
-    Allows Centre Manager to view and add staff to their centre. GAP-007.
+    Allows Centre Manager to VIEW staff at their centre (read-only).
+    Creating users is restricted to SysAdmin only — per requirements §8.7.
+    GAP-007.
     """
     permission_classes = [IsAuthenticated]
 
@@ -237,21 +238,6 @@ class CentreStaffView(APIView):
             return Response({"detail": "Not authorized."}, status=403)
         users = IreroUser.objects.filter(centre_id=request.user.centre_id, is_active=True)
         return Response(UserSerializer(users, many=True).data)
-
-    def post(self, request):
-        if request.user.role not in [Role.CENTRE_MGR, Role.SYS_ADMIN]:
-            return Response({"detail": "Not authorized."}, status=403)
-        data = request.data.copy()
-        data["centre_id"] = request.user.centre_id
-        # Force role to caregiver or chw if Centre Manager is creating
-        if data.get("role") not in [Role.CAREGIVER, Role.CHW]:
-            data["role"] = Role.CAREGIVER
-        
-        serializer = CreateUserSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        _log(request.user, "user.create_staff", record_id=user.id, request=request)
-        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 class CentreStaffDetailView(APIView):
     """

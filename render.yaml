@@ -1,4 +1,4 @@
-# Render Blueprint — deploy backend + dashboard
+# Render Blueprint — deploy backend + dashboard + celery worker
 # https://render.com/docs/blueprint-spec
 
 services:
@@ -38,13 +38,119 @@ services:
         fromDatabase:
           name: irerero-db
           property: port
+      # Redis — used by Celery and Django Channels
+      - key: REDIS_URL
+        fromService:
+          name: irerero-redis
+          type: redis
+          property: connectionString
+      # SMS — set SMS_PROVIDER=africas_talking and fill credentials to enable real SMS
+      - key: SMS_PROVIDER
+        value: "mock"   # Change to: africas_talking
+      - key: AT_USERNAME
+        value: "REPLACE_WITH_AT_USERNAME"
+      - key: AT_API_KEY
+        value: "REPLACE_WITH_AT_API_KEY"
+      # FCM Push — set path to your Firebase service account JSON (upload as secret file)
+      - key: FIREBASE_CREDENTIALS_PATH
+        value: ""   # Set to /etc/secrets/firebase-service-account.json after uploading
+
+  # Celery worker — runs all background health alert tasks (FR-034 to FR-041)
+  - type: worker
+    name: irerero-celery
+    runtime: python
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && celery -A irerero_backend worker --loglevel=info --concurrency=2
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          name: irerero-api
+          type: web
+          envVarKey: DJANGO_SECRET_KEY
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DB_ENGINE
+        value: django.db.backends.postgresql
+      - key: DB_NAME
+        fromDatabase:
+          name: irerero-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: irerero-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: irerero-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: irerero-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: irerero-db
+          property: port
+      - key: REDIS_URL
+        fromService:
+          name: irerero-redis
+          type: redis
+          property: connectionString
+      - key: SMS_PROVIDER
+        value: "mock"
+      - key: AT_USERNAME
+        value: "REPLACE_WITH_AT_USERNAME"
+      - key: AT_API_KEY
+        value: "REPLACE_WITH_AT_API_KEY"
+
+  # Celery beat — schedules periodic tasks (daily attendance checks, monthly reports, weekly SMS)
+  - type: worker
+    name: irerero-celery-beat
+    runtime: python
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && celery -A irerero_backend beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          name: irerero-api
+          type: web
+          envVarKey: DJANGO_SECRET_KEY
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DB_ENGINE
+        value: django.db.backends.postgresql
+      - key: DB_NAME
+        fromDatabase:
+          name: irerero-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: irerero-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: irerero-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: irerero-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: irerero-db
+          property: port
+      - key: REDIS_URL
+        fromService:
+          name: irerero-redis
+          type: redis
+          property: connectionString
 
   - type: web
     name: irerero-dashboard
     runtime: static
     buildCommand: cd web-dashboard && npm install && npm run build
     staticPublishPath: web-dashboard/dist
-    # SPA routing — all paths must return index.html (P5 fix)
+    # SPA routing — all paths must return index.html
     routes:
       - type: rewrite
         source: /*
@@ -58,3 +164,8 @@ databases:
     plan: free
     databaseName: irerero_db
     user: irerero
+
+# Redis for Celery task queue and Django Channels WebSocket layer
+redis:
+  - name: irerero-redis
+    plan: free

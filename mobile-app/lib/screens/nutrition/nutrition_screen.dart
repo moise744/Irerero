@@ -4,7 +4,8 @@ import '../../db/database_helper.dart';
 import 'package:uuid/uuid.dart';
 
 class NutritionScreen extends StatefulWidget {
-  const NutritionScreen({super.key});
+  final String? childUuid;
+  const NutritionScreen({super.key, this.childUuid});
 
   @override
   State<NutritionScreen> createState() => _NutritionScreenState();
@@ -29,9 +30,13 @@ class _NutritionScreenState extends State<NutritionScreen>
   Future<void> _loadData() async {
     final db = DatabaseHelper.instance;
     try {
-      final enrolments = await db.query('nutrition_programmes', orderBy: 'enrolment_date DESC');
+      final enrolments = widget.childUuid != null
+          ? await db.query('nutrition_programmes', where: 'child_uuid = ?', whereArgs: [widget.childUuid], orderBy: 'enrolment_date DESC')
+          : await db.query('nutrition_programmes', orderBy: 'enrolment_date DESC');
       final meals = await db.query('meal_records', orderBy: 'date DESC');
-      final intakeFlags = await db.query('food_intake_flags', orderBy: 'recorded_at DESC');
+      final intakeFlags = widget.childUuid != null
+          ? await db.query('food_intake_flags', where: 'child_uuid = ?', whereArgs: [widget.childUuid], orderBy: 'recorded_at DESC')
+          : await db.query('food_intake_flags', orderBy: 'recorded_at DESC');
 
       _childNameByUuid.clear();
       final children = await db.query('children', orderBy: 'full_name ASC');
@@ -185,8 +190,10 @@ class _NutritionScreenState extends State<NutritionScreen>
   }
 
   Future<void> _showEnrolmentDialog(BuildContext context) async {
-    final children = await DatabaseHelper.instance.query('children');
-    String? selectedChild;
+    final children = widget.childUuid != null 
+        ? await DatabaseHelper.instance.query('children', where: 'uuid = ?', whereArgs: [widget.childUuid])
+        : await DatabaseHelper.instance.query('children');
+    String? selectedChild = widget.childUuid;
     String progType = 'sfp';
 
     if (!context.mounted) return;
@@ -196,8 +203,9 @@ class _NutritionScreenState extends State<NutritionScreen>
         return Column(mainAxisSize: MainAxisSize.min, children: [
           DropdownButtonFormField<String>(
             hint: const Text('Select Child'),
+            value: selectedChild,
             items: children.map((c) => DropdownMenuItem(value: c['uuid'].toString(), child: Text(c['full_name'].toString()))).toList(),
-            onChanged: (v) => setDialogState(() => selectedChild = v),
+            onChanged: widget.childUuid != null ? null : (v) => setDialogState(() => selectedChild = v),
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
@@ -258,8 +266,10 @@ class _NutritionScreenState extends State<NutritionScreen>
   }
 
   Future<void> _showPoorIntakeDialog(BuildContext context) async {
-    final children = await DatabaseHelper.instance.query('children');
-    String? selectedChild;
+    final children = widget.childUuid != null 
+        ? await DatabaseHelper.instance.query('children', where: 'uuid = ?', whereArgs: [widget.childUuid])
+        : await DatabaseHelper.instance.query('children');
+    String? selectedChild = widget.childUuid;
     final notesCtrl = TextEditingController();
 
     if (!context.mounted) return;
@@ -269,8 +279,9 @@ class _NutritionScreenState extends State<NutritionScreen>
         return Column(mainAxisSize: MainAxisSize.min, children: [
           DropdownButtonFormField<String>(
             hint: const Text('Select Child'),
+            value: selectedChild,
             items: children.map((c) => DropdownMenuItem(value: c['uuid'].toString(), child: Text(c['full_name'].toString()))).toList(),
-            onChanged: (v) => setDialogState(() => selectedChild = v),
+            onChanged: widget.childUuid != null ? null : (v) => setDialogState(() => selectedChild = v),
           ),
           const SizedBox(height: 10),
           TextField(

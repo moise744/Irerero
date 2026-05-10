@@ -19,11 +19,12 @@ def process_child_after_sync(self, child_id: str):
     """
     Main AI processing task — triggered for each child after a sync upload.
     Runs all trend detection and generates alerts for any detected patterns.
+    Also checks for community-level alerts — FR-041.
     """
     try:
         from children.models import Child
         from ai.trend_analysis import run_all_trend_checks
-        from ai.alert_engine import generate_alert
+        from ai.alert_engine import generate_alert, check_community_alert
 
         child = Child.objects.get(id=child_id)
         detected_alerts = run_all_trend_checks(child_id)
@@ -33,6 +34,13 @@ def process_child_after_sync(self, child_id: str):
             alert = generate_alert(child, alert_data)
             if alert:
                 generated.append(str(alert.id))
+
+        # FR-041: Check community-level alert (>20% MAM/SAM in 30 days)
+        community_alert_data = check_community_alert(str(child.centre_id))
+        if community_alert_data:
+            community_alert = generate_alert(child, community_alert_data)
+            if community_alert:
+                generated.append(str(community_alert.id))
 
         return {
             "child_id":  child_id,

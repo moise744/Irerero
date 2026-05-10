@@ -5,6 +5,7 @@
 // SRS §5.1: "shall follow Google Material Design 3 (Material You) guidelines"
 // NFR-013: Default language is Kinyarwanda
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -129,7 +130,6 @@ class IrereroApp extends StatelessWidget {
   }
 }
 
-/// Restores connectivity monitoring after cold start when tokens were cached.
 class _AuthSessionGate extends StatefulWidget {
   const _AuthSessionGate({required this.auth});
 
@@ -141,6 +141,16 @@ class _AuthSessionGate extends StatefulWidget {
 
 class _AuthSessionGateState extends State<_AuthSessionGate> {
   bool _monitorStarted = false;
+  Timer? _inactivityTimer;
+
+  void _resetTimer() {
+    _inactivityTimer?.cancel();
+    if (widget.auth.isLoggedIn) {
+      _inactivityTimer = Timer(const Duration(minutes: 30), () {
+        widget.auth.logout();
+      });
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -151,11 +161,28 @@ class _AuthSessionGateState extends State<_AuthSessionGate> {
         if (!mounted) return;
         context.read<SyncService>().startMonitor(widget.auth);
       });
+      _resetTimer();
     }
   }
 
   @override
+  void dispose() {
+    _inactivityTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return widget.auth.isLoggedIn ? const HomeScreen() : const LoginScreen();
+    if (!widget.auth.isLoggedIn) {
+      _inactivityTimer?.cancel();
+      return const LoginScreen();
+    }
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) => _resetTimer(),
+      onPointerMove: (_) => _resetTimer(),
+      onPointerUp: (_) => _resetTimer(),
+      child: const HomeScreen(),
+    );
   }
 }

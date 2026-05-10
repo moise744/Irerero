@@ -22,7 +22,9 @@ import '../../widgets/status_badge.dart';
 
 class MeasurementScreen extends StatefulWidget {
   final Map<String, dynamic> child;
-  const MeasurementScreen({super.key, required this.child});
+  final bool isBatchMode;
+  final VoidCallback? onSaved;
+  const MeasurementScreen({super.key, required this.child, this.isBatchMode = false, this.onSaved});
 
   @override
   State<MeasurementScreen> createState() => _MeasurementScreenState();
@@ -237,8 +239,14 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
         ],
       ]),
       actions: [
-        FilledButton(onPressed: () { Navigator.pop(ctx); Navigator.pop(context); },
-            child: const Text('Done')),
+        FilledButton(onPressed: () { 
+          Navigator.pop(ctx); 
+          if (widget.onSaved != null) {
+            widget.onSaved!();
+          } else {
+            Navigator.pop(context); 
+          }
+        }, child: const Text('Done')),
       ],
     ));
   }
@@ -252,11 +260,10 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Measure — ${widget.child['full_name']}')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+    final body = SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+
 
           Row(children: [
             Icon(_deviceConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
@@ -346,7 +353,15 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
             ),
           ),
         ]),
-      ),
+      );
+
+    if (widget.isBatchMode) {
+      return Scaffold(body: body);
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Measure — ${widget.child['full_name']}')),
+      body: body,
     );
   }
 

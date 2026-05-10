@@ -196,37 +196,77 @@ class DistrictNationalDashboardView(APIView):
 
     def get(self, request):
         from children.models import Centre, Child, ChildStatus
+        from measurements.models import Measurement
 
         user = request.user
         # District-level: filter to user's district only
         if user.role == Role.DISTRICT and getattr(user, 'district_id', None):
             centres = Centre.objects.filter(district_id=user.district_id, is_active=True)
-            total_children = Child.objects.filter(centre__district_id=user.district_id, status=ChildStatus.ACTIVE).count()
+            children_qs = Child.objects.filter(centre__district_id=user.district_id, status=ChildStatus.ACTIVE)
         else:
             # National, sys_admin, partner — see all centres
             centres = Centre.objects.filter(is_active=True)
-            total_children = Child.objects.filter(status=ChildStatus.ACTIVE).count()
+            children_qs = Child.objects.filter(status=ChildStatus.ACTIVE)
 
-        # High-level aggregates
-        total_centres  = centres.count()
+        # FR-066: Apply query filters
+        sex_filter = request.query_params.get('sex')              # male | female
+        age_min    = request.query_params.get('age_min_months')   # integer months
+        age_max    = request.query_params.get('age_max_months')   # integer months
+        ns_filter  = request.query_params.get('nutritional_status')  # sam | mam | stunted...
 
-        # Build centres list for the Map
+        if sex_filter:
+            children_qs = children_qs.filter(sex=sex_filter)
+
+        # Age group filter via date_of_birth calculation
+        if age_min or age_max:
+            from django.utils import timezone
+            from datetime import timedelta
+            today = timezone.now().date()
+            if age_max:
+                min_dob = today - timedelta(days=int(age_max) * 30)
+                children_qs = children_qs.filter(date_of_birth__gte=min_dob)
+            if age_min:
+                max_dob = today - timedelta(days=int(age_min) * 30)
+                children_qs = children_qs.filter(date_of_birth__lte=max_dob)
+
+        total_children = children_qs.count()
+
+        # P13: Calculate real SAM% per centre from latest measurements
+        centres_list = list(centres)
         centres_data = []
-        for c in centres:
+        for c in centres_list:
+            centre_children = children_qs.filter(centre=c)
+            centre_total = centre_children.count()
+            sam_count = 0
+            for child in centre_children:
+                last_m = Measurement.objects.filter(child=child).order_by('-recorded_at').first()
+                if last_m and last_m.nutritional_status in ('sam', 'mam'):
+                    # Apply nutritional_status filter if set
+                    if ns_filter and last_m.nutritional_status != ns_filter:
+                        continue
+                if last_m and last_m.nutritional_status == 'sam':
+                    sam_count += 1
+            sam_pct = round(sam_count / centre_total * 100, 1) if centre_total else 0.0
             centres_data.append({
-                "centre_id": str(c.id),
-                "centre_name": c.centre_name,
-                "gps_latitude": float(c.gps_latitude) if c.gps_latitude else -1.9403,
-                "gps_longitude": float(c.gps_longitude) if c.gps_longitude else 29.8739,
-                "total_enrolled": Child.objects.filter(centre=c, status=ChildStatus.ACTIVE).count(),
-                "sam_percent": 0.0, # Approximate for map speed or calculate properly
+                'centre_id':     str(c.id),
+                'centre_name':   c.centre_name,
+                'gps_latitude':  float(c.gps_latitude) if c.gps_latitude else -1.9403,
+                'gps_longitude': float(c.gps_longitude) if c.gps_longitude else 29.8739,
+                'total_enrolled': centre_total,
+                'sam_percent':   sam_pct,
             })
 
         return Response({
-            "total_centres":  total_centres,
-            "total_children": total_children,
-            "centres": centres_data,
-            "filters_available": ["time_period", "age_group", "sex", "nutritional_status"],
+            'total_centres':  len(centres_list),
+            'total_children': total_children,
+            'centres':        centres_data,
+            'filters_applied': {
+                'sex': sex_filter,
+                'age_min_months': age_min,
+                'age_max_months': age_max,
+                'nutritional_status': ns_filter,
+            },
+            'filters_available': ['sex', 'age_min_months', 'age_max_months', 'nutritional_status'],
         })
 
 
@@ -432,7 +472,7 @@ class ReportExportView(APIView):
     def _export_pdf(self, report):
         """Export monthly report as PDF — FR-073."""
         from pdf.generator import generate_monthly_report_pdf
-        from django.http import FileResponse
+        from django.http import FileResponse, HttpResponse
         from pathlib import Path
         from django.conf import settings
 
@@ -440,9 +480,16 @@ class ReportExportView(APIView):
         full_path = Path(settings.MEDIA_ROOT) / path
         if full_path.exists():
             if str(full_path).lower().endswith(".html"):
-                return FileResponse(open(full_path, "rb"), content_type="text/html; charset=utf-8")
-            return FileResponse(open(full_path, "rb"), content_type="application/pdf")
-        return Response({"detail": "PDF generation failed."}, status=500)
+                # Inform client that PDF is served as printable HTML due to server environment
+                response = FileResponse(open(full_path, "rb"), content_type="text/html; charset=utf-8")
+                response["X-Fallback-Format"] = "html"
+                response["X-Fallback-Reason"] = "PDF generation unavailable on this server; HTML version provided for printing."
+                response["Content-Disposition"] = f'attachment; filename="irerero_report_{report.year}_{report.month:02d}.html"'
+                return response
+            resp = FileResponse(open(full_path, "rb"), content_type="application/pdf")
+            resp["Content-Disposition"] = f'attachment; filename="irerero_report_{report.year}_{report.month:02d}.pdf"'
+            return resp
+        return Response({"detail": "PDF generation failed. Please try again."}, status=500)
 
 
 class ChildGrowthReportPDFView(APIView):
@@ -498,41 +545,53 @@ class SdgIndicatorsView(APIView):
         from children.models import Child
         from measurements.models import Measurement
         from attendance.models import Attendance, AttendanceStatus
-        from django.db.models import Q
+        from referrals.models import Referral, ReferralStatus
+        from measurements.milestone_models import Immunisation, ImmunisationStatus
 
-        # Very basic implementation for SDG metrics
-        total_children = Child.objects.filter(status="active").count()
+        total_children = Child.objects.filter(status='active').count()
 
-        # SDG 2: Zero Hunger (Stunting & Wasting)
-        stunted_count = Measurement.objects.filter(
-            nutritional_status__in=["stunted", "severely_stunted"]
-        ).values("child_id").distinct().count()
-
-        wasted_count = Measurement.objects.filter(
-            nutritional_status__in=["sam", "mam"]
-        ).values("child_id").distinct().count()
+        # SDG 2: Zero Hunger (Stunting & Wasting) — from latest measurements per child
+        stunted_ids = set()
+        wasted_ids  = set()
+        for child in Child.objects.filter(status='active'):
+            last_m = Measurement.objects.filter(child=child).order_by('-recorded_at').first()
+            if last_m:
+                if last_m.nutritional_status in ('stunted', 'severely_stunted'):
+                    stunted_ids.add(child.id)
+                if last_m.nutritional_status in ('sam', 'mam'):
+                    wasted_ids.add(child.id)
 
         sdg2 = {
-            "stunting_rate_percent": round(stunted_count / total_children * 100, 1) if total_children else 0,
-            "wasting_rate_percent": round(wasted_count / total_children * 100, 1) if total_children else 0,
+            'stunting_rate_percent': round(len(stunted_ids) / total_children * 100, 1) if total_children else 0,
+            'wasting_rate_percent':  round(len(wasted_ids)  / total_children * 100, 1) if total_children else 0,
         }
 
-        # SDG 3: Good Health (Basic mock or using existing measurements/immunisation if any)
-        # Assuming we track immunisations in a future table or flags
+        # SDG 3: Good Health — immunisation coverage and referral completion
+        total_vaccines = Immunisation.objects.count()
+        given_vaccines = Immunisation.objects.filter(status=ImmunisationStatus.ADMINISTERED).count()
+        immunized_pct  = round(given_vaccines / total_vaccines * 100, 1) if total_vaccines else 0
+
+        total_referrals  = Referral.objects.count()
+        completed_refs   = Referral.objects.filter(
+            status__in=[ReferralStatus.ATTENDED, ReferralStatus.TREATMENT_GIVEN, ReferralStatus.CLOSED]
+        ).count()
+        ref_complete_pct = round(completed_refs / total_referrals * 100, 1) if total_referrals else 0
+
         sdg3 = {
-            "fully_immunized_percent": 85.0, # Placeholder
-            "referral_completion_percent": 90.0, # Placeholder
+            'fully_immunized_percent':      immunized_pct,
+            'referral_completion_percent':  ref_complete_pct,
         }
 
-        # SDG 4: Quality Education (Attendance Rate)
-        total_attendance_records = Attendance.objects.count()
-        present_records = Attendance.objects.filter(status=AttendanceStatus.PRESENT).count()
+        # SDG 4: Quality Education — ECD attendance rate
+        total_att   = Attendance.objects.count()
+        present_att = Attendance.objects.filter(status=AttendanceStatus.PRESENT).count()
         sdg4 = {
-            "ecd_attendance_rate_percent": round(present_records / total_attendance_records * 100, 1) if total_attendance_records else 0,
+            'ecd_attendance_rate_percent': round(present_att / total_att * 100, 1) if total_att else 0,
         }
 
         return Response({
-            "sdg2_zero_hunger": sdg2,
-            "sdg3_good_health": sdg3,
-            "sdg4_quality_education": sdg4,
+            'sdg2_zero_hunger':       sdg2,
+            'sdg3_good_health':       sdg3,
+            'sdg4_quality_education': sdg4,
+            'total_children_tracked': total_children,
         })
