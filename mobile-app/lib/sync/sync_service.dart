@@ -17,9 +17,8 @@ import '../services/notification_service.dart';
 enum SyncStatus { idle, syncing, synced, error }
 
 class SyncService extends ChangeNotifier {
-  // FIXED: Using 127.0.0.1 for physical phone USB debugging (Requires adb reverse)
   static const String _baseUrl = String.fromEnvironment(
-    'API_BASE_URL', defaultValue: 'http://127.0.0.1:8000/api/v1',
+    'API_BASE_URL', defaultValue: 'https://irerero-api.onrender.com/api/v1',
   );
 
   SyncStatus _status     = SyncStatus.idle;

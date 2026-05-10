@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
@@ -41,7 +42,7 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
       showWhen: true,
-      color: 0xFFD32F2F, // Red for urgent alerts
+      color: const Color(0xFFD32F2F), // Red for urgent alerts
     );
 
     const NotificationDetails platformChannelSpecifics =
