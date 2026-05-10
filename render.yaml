@@ -44,6 +44,11 @@ services:
     runtime: static
     buildCommand: cd web-dashboard && npm install && npm run build
     staticPublishPath: web-dashboard/dist
+    # SPA routing — all paths must return index.html (P5 fix)
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_API_URL
         value: https://irerero-api.onrender.com/api/v1

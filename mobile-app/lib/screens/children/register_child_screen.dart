@@ -86,6 +86,34 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
     }
 
     setState(() => _saving = true);
+
+    // P15: Duplicate child detection
+    final existingChildren = await DatabaseHelper.instance.query(
+      'children',
+      where: 'full_name = ? AND date_of_birth = ?',
+      whereArgs: [_nameCtrl.text.trim(), _isoDate(_dob!)],
+    );
+    if (existingChildren.isNotEmpty && mounted) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('⚠️ Umwana ashobora kuba yaranditswe'),
+          content: Text(
+            'Umwana ufite izina "${_nameCtrl.text.trim()}" n'itariki y'amavuko ${_isoDate(_dob!)} asanzwe mu bubiko.\n\n'
+            'Urashaka gukomeza kwandika?',
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Oya')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yego, komeza')),
+          ],
+        ),
+      );
+      if (proceed != true) {
+        if (mounted) setState(() => _saving = false);
+        return;
+      }
+    }
+
     final now = DateTime.now();
     final childUuid = const Uuid().v4();
     final nowIso = now.toIso8601String();

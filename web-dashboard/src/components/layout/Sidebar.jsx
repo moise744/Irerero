@@ -72,8 +72,12 @@ export default function Sidebar() {
   if (['district', 'national', 'sys_admin'].includes(role)) {
     links.push({ to: '/sms-campaign', label: 'SMS Blast', icon: 'sms', end: false })
   }
+  if (['national', 'sys_admin'].includes(role)) {
+    links.push({ to: '/report-builder', label: 'Report Builder', icon: 'reports', end: false })
+  }
   if (role === 'sys_admin') {
     links.push({ to: '/users', label: 'Users', icon: 'users', end: false })
+    links.push({ to: '/admin-tools', label: 'System Tools', icon: 'users', end: false })
   }
 
   return (

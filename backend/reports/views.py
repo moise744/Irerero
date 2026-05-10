@@ -234,6 +234,120 @@ class MonthlyReportViewSet(ModelViewSet):
         return Response(MonthlyReportSerializer(report).data)
 
 
+
+class GenerateMonthlyReportView(APIView):
+    """
+    POST /api/v1/reports/monthly/generate/
+    P2/P8: Auto-generates a monthly report for the current month.
+    If a report for this centre+month already exists, returns it.
+    Only Centre Manager or SysAdmin can trigger this.
+    FR-069, FR-070.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from children.models import Child, ChildStatus
+        from measurements.models import Measurement
+        from attendance.models import Attendance, AttendanceStatus
+        from alerts.models import Alert
+        from referrals.models import Referral
+        from nutrition.models import NutritionProgramme
+
+        user = request.user
+        if not user.centre_id and user.role not in [Role.SYS_ADMIN, Role.NATIONAL]:
+            return Response({"detail": "You must be assigned to a centre to generate reports."}, status=403)
+
+        centre_id = user.centre_id
+        now = timezone.now()
+        month = now.month
+        year = now.year
+
+        # Check if report already exists
+        existing = MonthlyReport.objects.filter(centre=centre_id, month=month, year=year).first()
+        if existing:
+            return Response(MonthlyReportSerializer(existing).data)
+
+        # Aggregate data
+        children = Child.objects.filter(centre_id=centre_id, status=ChildStatus.ACTIVE)
+        total = children.count()
+        male = children.filter(sex="male").count()
+        female = children.filter(sex="female").count()
+
+        # Nutritional status distribution
+        status_dist = {"normal": 0, "mam": 0, "sam": 0, "stunted": 0, "overweight": 0, "unmeasured": 0}
+        for child in children:
+            last_m = Measurement.objects.filter(child=child).order_by("-recorded_at").first()
+            if last_m:
+                s = last_m.nutritional_status or "normal"
+                status_dist[s] = status_dist.get(s, 0) + 1
+            else:
+                status_dist["unmeasured"] += 1
+
+        # Attendance rate this month
+        import calendar
+        days_in_month = calendar.monthrange(year, month)[1]
+        from datetime import date
+        month_start = date(year, month, 1)
+        today = now.date()
+        att_total = Attendance.objects.filter(
+            child__centre_id=centre_id, date__gte=month_start, date__lte=today
+        ).count()
+        att_present = Attendance.objects.filter(
+            child__centre_id=centre_id, date__gte=month_start, date__lte=today,
+            status=AttendanceStatus.PRESENT
+        ).count()
+        attendance_rate = round(att_present / att_total * 100, 1) if att_total > 0 else 0
+
+        # Referrals this month
+        total_referrals = Referral.objects.filter(
+            child__centre_id=centre_id,
+            referral_date__year=year, referral_date__month=month
+        ).count()
+
+        # Nutrition programme enrolments
+        children_in_nutrition = NutritionProgramme.objects.filter(
+            child__centre_id=centre_id, outcome="ongoing"
+        ).count()
+
+        # New SAM/MAM cases this month
+        new_sam = Measurement.objects.filter(
+            child__centre_id=centre_id,
+            nutritional_status="sam",
+            recorded_at__year=year, recorded_at__month=month
+        ).values("child_id").distinct().count()
+        new_mam = Measurement.objects.filter(
+            child__centre_id=centre_id,
+            nutritional_status="mam",
+            recorded_at__year=year, recorded_at__month=month
+        ).values("child_id").distinct().count()
+
+        # Active alerts
+        active_alerts = Alert.objects.filter(centre=centre_id, status="active").count()
+
+        report_data = {
+            "total_enrolled": total,
+            "total_enrolled_male": male,
+            "total_enrolled_female": female,
+            "nutritional_status": status_dist,
+            "attendance_rate": attendance_rate,
+            "total_referrals": total_referrals,
+            "children_in_nutrition": children_in_nutrition,
+            "new_sam_cases": new_sam,
+            "new_mam_cases": new_mam,
+            "active_alerts": active_alerts,
+        }
+
+        report = MonthlyReport.objects.create(
+            centre=centre_id,
+            month=month,
+            year=year,
+            data=report_data,
+            status=ReportStatus.DRAFT,
+        )
+
+        return Response(MonthlyReportSerializer(report).data, status=201)
+
+
 import csv
 import io
 from django.http import HttpResponse

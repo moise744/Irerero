@@ -7,6 +7,7 @@ router.register("monthly", views.MonthlyReportViewSet, basename="monthly-reports
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("monthly/generate/",              views.GenerateMonthlyReportView.as_view(), name="report-generate"),
     path("monthly/<uuid:pk>/approve/",     views.MonthlyReportViewSet.as_view({"post": "approve"}), name="report-approve"),
     path("monthly/<uuid:pk>.pdf",          views.ReportExportView.as_view(), {"format_type": "pdf"}, name="report-pdf"),
     path("monthly/<uuid:pk>.csv",          views.ReportExportView.as_view(), {"format_type": "csv"}, name="report-csv"),

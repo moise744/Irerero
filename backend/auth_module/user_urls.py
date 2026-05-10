@@ -6,4 +6,5 @@ urlpatterns = [
     path("centre-staff/<uuid:pk>/", views.CentreStaffDetailView.as_view(), name="centre-staff-detail"),
     path("<uuid:pk>/", views.UserDetailView.as_view(), name="user-detail"),
     path("<uuid:pk>/wipe/", views.remote_wipe_view,    name="user-wipe"),
+    path("<uuid:pk>/reset-password/", views.AdminResetPasswordView.as_view(), name="user-reset-password"),
 ]

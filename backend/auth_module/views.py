@@ -92,6 +92,50 @@ class MeView(APIView):
         return Response(serializer.data)
 
 
+class ChangePasswordView(APIView):
+    """
+    POST /api/v1/auth/change-password/
+    P22: Allow user to change their own password.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        old_password = request.data.get("old_password", "")
+        new_password = request.data.get("new_password", "")
+        if not old_password or not new_password:
+            return Response({"detail": "Both old_password and new_password are required."}, status=400)
+        if not request.user.check_password(old_password):
+            return Response({"detail": "Current password is incorrect."}, status=400)
+        if len(new_password) < 8:
+            return Response({"detail": "New password must be at least 8 characters."}, status=400)
+        request.user.set_password(new_password)
+        request.user.save()
+        _log(request.user, "auth.change_password", request=request)
+        return Response({"detail": "Password changed successfully."})
+
+
+class AdminResetPasswordView(APIView):
+    """
+    POST /api/v1/users/{id}/reset-password/
+    P22: SysAdmin can reset any user's password.
+    """
+    permission_classes = [IsAuthenticated, IsSysAdmin]
+
+    def post(self, request, pk):
+        target = IreroUser.objects.filter(pk=pk).first()
+        if not target:
+            return Response({"detail": "User not found."}, status=404)
+        new_password = request.data.get("new_password", "")
+        if not new_password or len(new_password) < 8:
+            return Response({"detail": "new_password must be at least 8 characters."}, status=400)
+        target.set_password(new_password)
+        target.failed_login_count = 0
+        target.locked_until = None
+        target.save()
+        _log(request.user, "user.reset_password", record_id=pk, request=request)
+        return Response({"detail": f"Password for {target.username} has been reset."})
+
+
 class UserListCreateView(APIView):
     """
     GET  /api/v1/users/         — list all users (SysAdmin only)

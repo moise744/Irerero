@@ -115,9 +115,14 @@ export default function LoginPage() {
               {loading ? 'Signing in…' : 'Continue'}
             </button>
           </form>
-          <p className="text-center text-xs text-stone-400 mt-8">
-            Demo: <span className="text-stone-600">caregiver01</span> / Irerero2025!
-          </p>
+          <div className="text-center text-xs text-stone-400 mt-6 space-y-2">
+            <p>
+              Forgot password? <a href="mailto:admin@irerero.rw" className="text-primary hover:underline font-medium">Contact SysAdmin</a> to reset it.
+            </p>
+            <p>
+              Demo: <span className="text-stone-600">caregiver01</span> / Irerero2025!
+            </p>
+          </div>
         </div>
       </div>
     </div>

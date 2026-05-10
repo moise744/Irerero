@@ -38,7 +38,8 @@ class LoginSerializer(serializers.Serializer):
 
         if not user.check_password(data["password"]):
             user.failed_login_count += 1
-            if user.failed_login_count >= 5:
+            # P13: Never lock the sys_admin account via brute force
+            if user.failed_login_count >= 5 and user.role != 'sys_admin':
                 user.locked_until = timezone.now() + timezone.timedelta(minutes=30)
             user.save(update_fields=["failed_login_count", "locked_until"])
             attempts_left = max(0, 5 - user.failed_login_count)

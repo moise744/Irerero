@@ -1,10 +1,12 @@
 // src/pages/ChildrenPage.jsx — FR-015 searchable child register with 7 profile tabs
+// P3: Sensitive fields visible for Centre Manager+
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { childrenApi, alertsApi } from '../services/api'
 import StatusBadge from '../components/layout/StatusBadge'
 import Header from '../components/layout/Header'
 import GrowthChart from '../components/charts/GrowthChart'
+import { useAuthStore } from '../hooks/useAuth'
 
 function MeasurementsTab({ childId }) {
   const { data, isLoading } = useQuery({
@@ -177,28 +179,120 @@ function ImmunisationTab({ childId }) {
   )
 }
 
-function NotesTab({ child }) {
+function AttendanceTab({ childId }) {
+  // P24: Attendance history tab
+  const { data, isLoading } = useQuery({
+    queryKey: ['child-attendance', childId],
+    queryFn: () => import('../services/api').then(m => m.default.get('/attendance/', { params: { child: childId } })).then(r => r.data.results || r.data || []),
+  })
+  if (isLoading) return <div className="text-center py-8 text-gray-400">Loading attendance…</div>
+  const records = data || []
+  if (!records.length) return <div className="bg-white rounded-xl shadow p-6 text-center text-gray-400">No attendance records yet.</div>
   return (
-    <div className="bg-white rounded-xl shadow p-6">
-      <h3 className="font-display font-semibold text-stone-900 mb-4">Caregiver notes</h3>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Guardian</label>
-          <p className="text-gray-800">{child.guardian_name} — {child.guardian_phone}</p>
+    <div className="bg-white rounded-xl shadow overflow-hidden">
+      <table className="w-full text-sm">
+        <thead><tr className="bg-stone-100 text-stone-700 text-xs uppercase tracking-wide">
+          <th className="px-4 py-3 text-left">Date</th>
+          <th className="px-4 py-3 text-center">Status</th>
+          <th className="px-4 py-3 text-left">Absence Reason</th>
+        </tr></thead>
+        <tbody>{records.slice(0, 60).map((a, i) => (
+          <tr key={a.id || i} className={i % 2 === 0 ? 'bg-gray-50' : ''}>
+            <td className="px-4 py-2">{a.date}</td>
+            <td className="px-4 py-2 text-center">
+              <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-bold ${a.status === 'present' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                {a.status}
+              </span>
+            </td>
+            <td className="px-4 py-2 text-gray-500">{a.absence_reason || '—'}</td>
+          </tr>
+        ))}</tbody>
+      </table>
+    </div>
+  )
+}
+
+function NutritionTab({ childId }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['child-nutrition', childId],
+    queryFn: () => import('../services/api').then(m => m.default.get('/nutrition/', { params: { child: childId } })).then(r => r.data.results || r.data || []),
+  })
+  if (isLoading) return <div className="text-center py-8 text-gray-400">Loading nutrition data…</div>
+  const records = data || []
+  if (!records.length) return <div className="bg-white rounded-xl shadow p-6 text-center text-gray-400">Not enrolled in any nutrition programme.</div>
+  return (
+    <div className="space-y-3">
+      {records.map(n => (
+        <div key={n.id} className="bg-white rounded-xl shadow p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h4 className="font-semibold text-gray-800 capitalize">{n.programme_type === 'tfp' ? 'Therapeutic Feeding (RUTF)' : 'Supplementary Feeding (SFP)'}</h4>
+              <p className="text-sm text-gray-500 mt-1">Enrolled: {n.enrolment_date} {n.expected_end_date ? `→ Expected end: ${n.expected_end_date}` : ''}</p>
+            </div>
+            <span className={`text-xs px-2 py-1 rounded-full font-bold capitalize ${n.outcome === 'ongoing' ? 'bg-blue-50 text-blue-700' : n.outcome === 'graduated' ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-600'}`}>
+              {n.outcome}
+            </span>
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Home Village</label>
-          <p className="text-gray-800">{child.home_village || 'Not recorded'}</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Enrolment Date</label>
-          <p className="text-gray-800">{child.enrolment_date}</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <p className="text-gray-600 bg-gray-50 rounded-lg p-3 min-h-[80px]">{child.notes || 'No caregiver notes yet.'}</p>
+      ))}
+    </div>
+  )
+}
+
+function NotesTab({ child }) {
+  // P3: Show sensitive fields for Centre Manager+
+  const user = useAuthStore(s => s.user)
+  const canSeeSensitive = ['centre_mgr', 'sector', 'district', 'national', 'sys_admin'].includes(user?.role)
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-xl shadow p-6">
+        <h3 className="font-display font-semibold text-stone-900 mb-4">Caregiver Notes</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Guardian</label>
+            <p className="text-gray-800">{child.guardian_name} — {child.guardian_phone}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Home Village</label>
+            <p className="text-gray-800">{child.home_village || 'Not recorded'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Enrolment Date</label>
+            <p className="text-gray-800">{child.enrolment_date}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <p className="text-gray-600 bg-gray-50 rounded-lg p-3 min-h-[80px]">{child.notes || 'No caregiver notes yet.'}</p>
+          </div>
         </div>
       </div>
+
+      {/* P3: Sensitive fields — only visible to Centre Manager and above */}
+      {canSeeSensitive && (
+        <div className="bg-white rounded-xl shadow p-6 border-l-4 border-amber-400">
+          <h3 className="font-display font-semibold text-stone-900 mb-1">Sensitive Information</h3>
+          <p className="text-xs text-stone-400 mb-4">Only visible to Centre Manager, Sector Coordinator, and above — FR-017</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Orphan Status</label>
+              <p className="text-gray-800">{child.is_orphan === true ? '✓ Yes' : child.is_orphan === false ? '✗ No' : 'Not recorded'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Disability</label>
+              <p className="text-gray-800">{child.has_disability === true ? '✓ Yes' : child.has_disability === false ? '✗ No' : 'Not recorded'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">HIV Exposure Status</label>
+              <p className="text-gray-800">{child.hiv_exposure_status || 'Not recorded'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Chronic Conditions</label>
+              <p className="text-gray-800">{child.chronic_conditions || 'None recorded'}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -218,7 +312,7 @@ export default function ChildrenPage() {
       }),
   })
 
-  const TABS = ['growth','measurements','alerts','referrals','immunisation','notes']
+  const TABS = ['growth','attendance','measurements','nutrition','alerts','referrals','immunisation','notes']
 
   // Load full detail for selected child (list endpoint omits fields like `notes`)
   const { data: selectedDetail } = useQuery({
@@ -294,7 +388,9 @@ export default function ChildrenPage() {
             </div>
             <div className="p-6">
               {activeTab === 'growth'        && <GrowthChart childId={selected.id} />}
+              {activeTab === 'attendance'    && <AttendanceTab childId={selected.id} />}
               {activeTab === 'measurements'  && <MeasurementsTab childId={selected.id} />}
+              {activeTab === 'nutrition'     && <NutritionTab childId={selected.id} />}
               {activeTab === 'alerts'        && <AlertsTab childId={selected.id} />}
               {activeTab === 'referrals'     && <ReferralsTab childId={selected.id} />}
               {activeTab === 'immunisation'  && <ImmunisationTab childId={selected.id} />}

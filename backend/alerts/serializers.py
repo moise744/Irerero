@@ -39,6 +39,21 @@ class AlertSerializer(serializers.ModelSerializer):
             AlertSeverity.INFORMATION: "green",
         }.get(obj.severity, "green")
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request:
+            from auth_module.models import Role
+            # P12: Anonymize alert data for Partner role
+            if request.user.role == Role.PARTNER:
+                data["child_name"] = "Anonymised"
+                data.pop("guardian_phone", None)
+                data["explanation_en"] = "A child requires attention."
+                data["explanation_rw"] = "Umwana akeneye gukorerwa."
+                data.pop("recommendation_en", None)
+                data.pop("recommendation_rw", None)
+        return data
+
 
 class ActionAlertSerializer(serializers.Serializer):
     """

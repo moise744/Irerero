@@ -6,15 +6,21 @@ import { useAuthStore } from '../../hooks/useAuth'
 export default function AlertTrendsChart() {
   const user = useAuthStore(s => s.user)
 
-  // Fetch trend data from backend, fallback to empty array if endpoint isn't wired yet
-  const { data, isLoading, isError } = useQuery({
+  // P10: Fetch trend data — handle missing endpoint gracefully
+  const { data, isLoading } = useQuery({
     queryKey: ['alert-trends'],
-    queryFn: () => api.get('/alerts/trends/').then(r => r.data).catch(() => []),
+    queryFn: async () => {
+      try {
+        const r = await api.get('/alerts/trends/')
+        return r.data
+      } catch {
+        return []  // endpoint may not exist — gracefully fallback
+      }
+    },
     enabled: !!user,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   })
-
-  if (isLoading) return <div className="h-64 flex items-center justify-center text-gray-500">Loading trends...</div>
-  if (isError) return <div className="h-64 flex items-center justify-center text-red-500">Error loading trends</div>
 
   // If no data returned from backend, use some mock data for demonstration
   const chartData = data?.length > 0 ? data : [
@@ -29,6 +35,12 @@ export default function AlertTrendsChart() {
   return (
     <div className="bg-white rounded-xl border border-stone-200/90 shadow-sm p-5 h-[350px] flex flex-col">
       <h3 className="font-display font-semibold text-stone-900 mb-4">Malnutrition Trends</h3>
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center text-stone-400 text-sm">
+          <div className="h-6 w-6 border-2 border-stone-200 border-t-primary rounded-full animate-spin mr-2"></div>
+          Loading trends…
+        </div>
+      ) : (
       <div className="flex-1 min-h-0 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
@@ -45,6 +57,7 @@ export default function AlertTrendsChart() {
           </LineChart>
         </ResponsiveContainer>
       </div>
+      )}
     </div>
   )
 }

@@ -43,8 +43,13 @@ urlpatterns = [
         path("sync/",         include("sync.urls")),
         path("notifications/", include("notifications.urls")),
         path("ai/retrain/",   __import__('ai.views', fromlist=['MLRetrainView']).MLRetrainView.as_view(), name="ml-retrain"),
+        path("ai/update-lms/", __import__('ai.views', fromlist=['UpdateLMSView']).UpdateLMSView.as_view(), name="update-lms"),
         path("audit-logs/",   __import__('auth_module.views', fromlist=['AuditLogListView']).AuditLogListView.as_view(), name="audit-logs"),
     ])),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# P4: Custom error handlers — prevent internal detail leakage
+handler500 = "irerero_backend.exceptions.handler500"
+handler404 = "irerero_backend.exceptions.handler404"

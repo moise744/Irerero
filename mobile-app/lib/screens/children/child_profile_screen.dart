@@ -314,13 +314,65 @@ class _NutritionTab extends StatelessWidget {
   final Map<String, dynamic> child;
   const _NutritionTab({required this.child});
   @override Widget build(BuildContext context) {
-    return Center(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         const Icon(Icons.restaurant, size: 48, color: Color(0xFF00d084)),
         const SizedBox(height: 12),
         FilledButton.icon(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NutritionScreen())),
           icon: const Icon(Icons.open_in_new), label: const Text('Fungura Indyo'),
+        ),
+        const SizedBox(height: 24),
+        // P17: Flag poor food intake button
+        OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFFe21e5a),
+            side: const BorderSide(color: Color(0xFFe21e5a)),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          ),
+          onPressed: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                icon: const Icon(Icons.no_food, color: Color(0xFFe21e5a), size: 40),
+                title: const Text('Andika ibiryo bibi'),
+                content: const Text('Urashaka gushyira ikimenyetso ko uyu mwana adashobora kurya neza?'),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Oya')),
+                  FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFFe21e5a)),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Yego'),
+                  ),
+                ],
+              ),
+            );
+            if (confirm == true) {
+              // Record in local DB
+              final auth = context.read<AuthService>();
+              await DatabaseHelper.instance.insert('food_intake_flags', {
+                'uuid': const Uuid().v4(),
+                'child_uuid': child['uuid'],
+                'meal_uuid': 'manual-flag',
+                'poor_intake': 1,
+                'notes': 'Poor food intake flagged by caregiver',
+                'recorded_by': auth.userId ?? 'unknown',
+                'recorded_at': DateTime.now().toIso8601String(),
+                'synced_at': '',
+              });
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Ikimenyetso cy\'ibiryo bibi cyashyizweho.'),
+                    backgroundColor: Color(0xFFe21e5a),
+                  ),
+                );
+              }
+            }
+          },
+          icon: const Icon(Icons.no_food),
+          label: const Text('Andika Ibiryo bibi'),
         ),
       ]),
     );

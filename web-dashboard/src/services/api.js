@@ -63,7 +63,29 @@ export const smsApi = {
 export const reportsApi = {
   monthly: p   => api.get('/reports/monthly/', {params:p}),
   approve: (id,notes) => api.post(`/reports/monthly/${id}/approve/`, {manager_notes:notes}),
+  generate: () => api.post('/reports/monthly/generate/'),
   pdfUrl:  id  => `${resolveApiBase()}/reports/monthly/${id}.pdf`,
   csvUrl:  id  => `${resolveApiBase()}/reports/monthly/${id}.csv`,
-  sectorPdfUrl: () => `${resolveApiBase()}/reports/sector/report.pdf`, // Added for Sector PDF
+  sectorPdfUrl: () => `${resolveApiBase()}/reports/sector/report.pdf`,
+}
+
+/**
+ * P1 Fix: Download a file using an authenticated fetch request.
+ * Regular <a href> links don't send the Bearer token, causing 401 errors.
+ * This function fetches the file with auth headers and triggers a download.
+ */
+export async function authenticatedDownload(url, filename) {
+  const token = localStorage.getItem('access_token')
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) throw new Error(`Download failed: ${res.status}`)
+  const blob = await res.blob()
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = filename || 'download'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(link.href)
 }

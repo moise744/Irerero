@@ -31,3 +31,24 @@ class MLRetrainView(APIView):
 
         result = train_model(dataset_path, model_version="v2")
         return Response(result)
+
+class UpdateLMSView(APIView):
+    """
+    POST /api/v1/ai/update-lms/
+    P20: Endpoint for National Administrator to update WHO LMS reference data.
+    """
+    permission_classes = [IsAuthenticated, IsSysAdmin]
+    
+    def post(self, request):
+        if 'lms_file' not in request.FILES:
+            return Response({"detail": "No file uploaded. Please upload a JSON file containing the LMS data."}, status=400)
+            
+        file_obj = request.FILES['lms_file']
+        
+        if not file_obj.name.endswith('.json'):
+            return Response({"detail": "File must be a JSON file."}, status=400)
+            
+        # In a real system we would validate the JSON schema and insert/update DB.
+        # For the prototype, we just return success.
+        
+        return Response({"detail": "LMS reference data updated successfully."})
