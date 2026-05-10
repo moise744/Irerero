@@ -57,9 +57,19 @@ class SyncService extends ChangeNotifier {
     try {
       var nextUri = Uri.parse('$_baseUrl/children/');
       while (true) {
-        final res = await http
+        var res = await http
             .get(nextUri, headers: auth.authHeaders)
             .timeout(const Duration(seconds: 45));
+
+        if (res.statusCode == 401) {
+          final refreshed = await auth.refreshToken();
+          if (refreshed) {
+            res = await http
+                .get(nextUri, headers: auth.authHeaders)
+                .timeout(const Duration(seconds: 45));
+          }
+        }
+
         if (res.statusCode != 200) break;
         final body = jsonDecode(res.body) as Map<String, dynamic>;
         final results = body['results'] as List? ?? [];
@@ -159,7 +169,7 @@ class SyncService extends ChangeNotifier {
       }).toList();
 
       // FIXED: Added Content-Type so Django understands the JSON payload
-      final res = await http.post(
+      var res = await http.post(
         Uri.parse('$_baseUrl/sync/'),
         headers: {
           ...auth.authHeaders,
@@ -171,6 +181,30 @@ class SyncService extends ChangeNotifier {
           'device_id': 'irerero-mobile-${auth.userId ?? "unknown"}',
         }),
       ).timeout(const Duration(seconds: 30));
+
+      // Handle 401 Unauthorized by attempting a token refresh
+      if (res.statusCode == 401) {
+        final refreshed = await auth.refreshToken();
+        if (refreshed) {
+          res = await http.post(
+            Uri.parse('$_baseUrl/sync/'),
+            headers: {
+              ...auth.authHeaders,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'records':   records,
+              'device_id': 'irerero-mobile-${auth.userId ?? "unknown"}',
+            }),
+          ).timeout(const Duration(seconds: 30));
+        } else {
+          _status = SyncStatus.error;
+          _lastError = 'Session expired. Please connect to the internet and log in again.';
+          notifyListeners();
+          return {'error': 'unauthorized'};
+        }
+      }
 
       if (res.statusCode == 200) {
         final data     = jsonDecode(res.body) as Map<String, dynamic>;

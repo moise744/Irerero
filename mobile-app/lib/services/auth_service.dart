@@ -202,6 +202,32 @@ class AuthService extends ChangeNotifier {
     return {'success': true, 'user': _user, 'pin': true};
   }
 
+  Future<bool> refreshToken() async {
+    try {
+      final refresh = await _storage.read(key: 'refresh_token');
+      if (refresh == null) return false;
+
+      final res = await http.post(
+        Uri.parse('$_baseUrl/auth/refresh/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh': refresh}),
+      ).timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        _accessToken = data['access'];
+        await _storage.write(key: 'access_token', value: _accessToken);
+        if (data.containsKey('refresh')) {
+          await _storage.write(key: 'refresh_token', value: data['refresh']);
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   String _pinHash(String pin) {
     final digest = sha256.convert(utf8.encode('irerero-pin-v1|$pin')).toString();
     return 'sha256:$digest';
