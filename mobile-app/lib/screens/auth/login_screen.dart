@@ -28,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool  _pinObscure = true;
   bool  _hasPin     = false;
   String? _error;
+  String? _loadingMessage;
   String _selectedLang = 'rw'; // Default Kinyarwanda — NFR-013
 
   final _labels = {
@@ -213,11 +214,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           onTap: _loading ? null : _submit,
                           child: Center(
                             child: _loading
-                                ? const SizedBox(width: 20, height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                ? Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(
+                                        width: 20, height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      ),
+                                      if (_loadingMessage != null) ...[
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          _loadingMessage!,
+                                          style: const TextStyle(fontSize: 10, color: Colors.white70),
+                                        ),
+                                      ],
+                                    ],
+                                  )
                                 : Text(
-                                    _t['login']!, 
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.1)
+                                    _t['login']!,
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.1),
                                   ),
                           ),
                         ),
@@ -265,12 +280,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+      _loadingMessage = _selectedLang == 'rw'
+          ? 'Guhuza na seriveri...'
+          : 'Connecting to server…';
+    });
 
     final auth   = context.read<AuthService>();
     final result = await auth.login(_userCtrl.text.trim(), _passCtrl.text);
 
-    setState(() => _loading = false);
+    setState(() { _loading = false; _loadingMessage = null; });
 
     if (result['success'] == true) {
       context.read<SyncService>().startMonitor(auth);

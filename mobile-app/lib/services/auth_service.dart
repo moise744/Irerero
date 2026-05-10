@@ -34,34 +34,44 @@ class AuthService extends ChangeNotifier {
   Locale get preferredLocale => _locale;
 
   /// Online login — FR-001.
+  /// Render free tier can take 30-60s to wake from sleep, so we allow up to
+  /// 90 seconds and show a "waking up" message on first attempt.
   Future<Map<String, dynamic>> login(String username, String password) async {
-    try {
-      final res = await http.post(
-        Uri.parse('$_baseUrl/auth/login/'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': username, 'password': password}),
-      ).timeout(const Duration(seconds: 10));
+    // Try up to 2 times — first attempt may hit Render cold start
+    for (int attempt = 1; attempt <= 2; attempt++) {
+      try {
+        final res = await http.post(
+          Uri.parse('$_baseUrl/auth/login/'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'username': username, 'password': password}),
+        ).timeout(const Duration(seconds: 90));
 
-      if (res.statusCode == 200) {
-        final data  = jsonDecode(res.body) as Map<String, dynamic>;
-        _accessToken = data['access'] as String;
-        _user        = data['user'] as Map<String, dynamic>;
-        await _storage.write(key: 'access_token',  value: _accessToken);
-        await _storage.write(key: 'refresh_token', value: data['refresh'] as String);
-        await _storage.write(key: 'user',          value: jsonEncode(_user));
-        // Cache credentials for offline login — FR-004
-        await _cacheForOffline(username, password, _user!);
-        notifyListeners();
-        return {'success': true, 'user': _user};
+        if (res.statusCode == 200) {
+          final data  = jsonDecode(res.body) as Map<String, dynamic>;
+          _accessToken = data['access'] as String;
+          _user        = data['user'] as Map<String, dynamic>;
+          await _storage.write(key: 'access_token',  value: _accessToken);
+          await _storage.write(key: 'refresh_token', value: data['refresh'] as String);
+          await _storage.write(key: 'user',          value: jsonEncode(_user));
+          // Cache credentials for offline login — FR-004
+          await _cacheForOffline(username, password, _user!);
+          notifyListeners();
+          return {'success': true, 'user': _user};
+        }
+
+        // Parse server error — NFR-014: plain language error messages
+        final err = jsonDecode(res.body);
+        return {'success': false, 'error': err['detail'] ?? 'Login failed.'};
+      } catch (e) {
+        if (attempt == 1) {
+          // First attempt timed out — server may be waking up, try once more
+          continue;
+        }
+        // Both attempts failed — try offline login — FR-004
+        return _offlineLogin(username, password);
       }
-
-      // Parse server error — NFR-014: plain language error messages
-      final err = jsonDecode(res.body);
-      return {'success': false, 'error': err['detail'] ?? 'Login failed.'};
-    } catch (e) {
-      // Network error — try offline login — FR-004
-      return _offlineLogin(username, password);
     }
+    return _offlineLogin(username, password);
   }
 
   /// Offline login using cached credential fingerprint — FR-004.
