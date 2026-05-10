@@ -12,6 +12,7 @@ import '../../db/database_helper.dart';
 import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/child_avatar.dart';
 
 class ReferralScreen extends StatefulWidget {
   final String? childUuid;
@@ -203,7 +204,14 @@ class _NewReferralSheetState extends State<_NewReferralSheet> {
                 .map(
                   (c) => DropdownMenuItem<String>(
                     value: c['uuid'] as String,
-                    child: Text(c['full_name'] as String? ?? ''),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ChildAvatar(child: c, radius: 12),
+                        const SizedBox(width: 8),
+                        Text(c['full_name'] as String? ?? ''),
+                      ],
+                    ),
                   ),
                 )
                 .toList(),

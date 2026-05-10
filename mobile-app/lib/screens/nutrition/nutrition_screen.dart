@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../db/database_helper.dart';
 import 'package:uuid/uuid.dart';
+import '../../widgets/child_avatar.dart';
 
 class NutritionScreen extends StatefulWidget {
   final String? childUuid;
@@ -204,7 +205,7 @@ class _NutritionScreenState extends State<NutritionScreen>
           DropdownButtonFormField<String>(
             hint: const Text('Select Child'),
             value: selectedChild,
-            items: children.map((c) => DropdownMenuItem(value: c['uuid'].toString(), child: Text(c['full_name'].toString()))).toList(),
+            items: children.map((c) => DropdownMenuItem(value: c['uuid'].toString(), child: Row(mainAxisSize: MainAxisSize.min, children: [ChildAvatar(child: c, radius: 12), const SizedBox(width: 8), Text(c['full_name'].toString())]))).toList(),
             onChanged: widget.childUuid != null ? null : (v) => setDialogState(() => selectedChild = v),
           ),
           const SizedBox(height: 10),
@@ -280,7 +281,7 @@ class _NutritionScreenState extends State<NutritionScreen>
           DropdownButtonFormField<String>(
             hint: const Text('Select Child'),
             value: selectedChild,
-            items: children.map((c) => DropdownMenuItem(value: c['uuid'].toString(), child: Text(c['full_name'].toString()))).toList(),
+            items: children.map((c) => DropdownMenuItem(value: c['uuid'].toString(), child: Row(mainAxisSize: MainAxisSize.min, children: [ChildAvatar(child: c, radius: 12), const SizedBox(width: 8), Text(c['full_name'].toString())]))).toList(),
             onChanged: widget.childUuid != null ? null : (v) => setDialogState(() => selectedChild = v),
           ),
           const SizedBox(height: 10),

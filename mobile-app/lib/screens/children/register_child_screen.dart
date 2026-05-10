@@ -100,7 +100,7 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
         builder: (ctx) => AlertDialog(
           title: const Text('⚠️ Umwana ashobora kuba yaranditswe'),
           content: Text(
-            'Umwana ufite izina "${_nameCtrl.text.trim()}" n'itariki y'amavuko ${_isoDate(_dob!)} asanzwe mu bubiko.\n\n'
+            'Umwana ufite izina "${_nameCtrl.text.trim()}" n\'itariki y\'amavuko ${_isoDate(_dob!)} asanzwe mu bubiko.\n\n'
             'Urashaka gukomeza kwandika?',
           ),
           actions: [

@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import '../../db/database_helper.dart';
 import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
+import '../../widgets/child_avatar.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -155,7 +156,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ),
               ),
             ),
-            title: Text(child['full_name'] as String? ?? ''),
+            title: Row(
+              children: [
+                ChildAvatar(child: child, radius: 16),
+                const SizedBox(width: 8),
+                Expanded(child: Text(child['full_name'] as String? ?? '')),
+              ],
+            ),
             trailing: !present
                 ? DropdownButton<String>(
                     value: _reasons[id]?.isNotEmpty == true ? _reasons[id] : null,

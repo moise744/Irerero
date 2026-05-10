@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../db/database_helper.dart';
 import '../../widgets/status_badge.dart';
+import '../../widgets/child_avatar.dart';
 import 'child_profile_screen.dart';
 import 'register_child_screen.dart';
 
@@ -102,11 +103,7 @@ class _ChildListScreenState extends State<ChildListScreen> {
                     final childUuid = (c['uuid'] as String?) ?? '';
                     final status = _statusByChild[childUuid] ?? 'unmeasured';
                     return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-                        child: Text((c['full_name'] as String? ?? '?')[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
+                      leading: ChildAvatar(child: c),
                       title: Text(c['full_name'] as String? ?? ''),
                       subtitle: Text(c['irerero_id'] as String? ?? ''),
                       trailing: StatusBadge(status: status, compact: true),

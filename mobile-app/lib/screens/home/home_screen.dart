@@ -25,6 +25,7 @@ import '../measurements/measurement_screen.dart';
 import '../measurements/batch_measurement_screen.dart';
 import '../settings/settings_screen.dart';
 import '../nutrition/meal_recording_screen.dart';
+import '../../widgets/child_avatar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -209,14 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemBuilder: (_, i) {
                   final c = children[i];
                   return ListTile(
-                    leading: CircleAvatar(
-                      child: Text(
-                        ((c['full_name'] as String?)?.isNotEmpty == true
-                                ? (c['full_name'] as String).substring(0, 1)
-                                : '?')
-                            .toUpperCase(),
-                      ),
-                    ),
+                    leading: ChildAvatar(child: c),
                     title: Text(c['full_name'] as String? ?? ''),
                     subtitle: Text(c['irerero_id'] as String? ?? ''),
                     onTap: () => Navigator.pop(ctx, c),
