@@ -69,7 +69,7 @@ class Child(models.Model):
     guardian_phone  = models.CharField(max_length=20)
     home_village    = models.CharField(max_length=200)   # Umudugudu
 
-    enrolment_date  = models.DateField(default=timezone.now)
+    enrolment_date  = models.DateField(default=timezone.localdate)
     status          = models.CharField(max_length=10, choices=ChildStatus.choices, default=ChildStatus.ACTIVE)
 
     # Optional fields — FR-016, FR-017

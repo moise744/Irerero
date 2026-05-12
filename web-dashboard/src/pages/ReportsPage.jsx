@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { reportsApi, authenticatedDownload } from '../services/api'
 import Header from '../components/layout/Header'
 import { useAuthStore } from '../hooks/useAuth'
+import { useFlashMessage } from '../hooks/useFlashMessage'
+import FlashBanner from '../components/ui/FlashBanner'
 
 export default function ReportsPage() {
   const qc = useQueryClient()
@@ -12,11 +14,12 @@ export default function ReportsPage() {
   const [approvingId, setApprovingId] = useState(null)
   const [downloading, setDownloading] = useState(null)
   const [generating, setGenerating] = useState(false)
+  const { flash, success, error } = useFlashMessage()
 
   const isSectorOrAbove = ['sector', 'district', 'national', 'sys_admin'].includes(user?.role)
   const isCentreMgr = user?.role === 'centre_mgr'
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  const { data, isLoading, isError, error: queryError, refetch } = useQuery({
     queryKey: ['monthly-reports'],
     queryFn: () => reportsApi.monthly().then(r => r.data.results || r.data || []),
   })
@@ -27,6 +30,10 @@ export default function ReportsPage() {
       qc.invalidateQueries(['monthly-reports'])
       setApprovingId(null)
       setNotes('')
+      success('Report approved and submitted successfully.')
+    },
+    onError: err => {
+      error(err?.response?.data?.detail || err.message || 'Approval failed.')
     },
   })
 
@@ -35,16 +42,21 @@ export default function ReportsPage() {
     onSuccess: () => {
       qc.invalidateQueries(['monthly-reports'])
       setGenerating(false)
+      success('Monthly report generated successfully.')
     },
-    onError: () => setGenerating(false),
+    onError: err => {
+      setGenerating(false)
+      error(err?.response?.data?.detail || err.message || 'Could not generate report.')
+    },
   })
 
   const handleDownload = async (url, filename) => {
     setDownloading(filename)
     try {
       await authenticatedDownload(url, filename)
+      success(`Downloaded ${filename} successfully.`)
     } catch (e) {
-      alert(`Download failed: ${e.message}`)
+      error(`Download failed: ${e.message}`)
     } finally {
       setDownloading(null)
     }
@@ -62,6 +74,7 @@ export default function ReportsPage() {
     <div className="flex-1 overflow-auto bg-canvas relative">
       <Header title="Monthly Reports" />
       <div className="p-6 md:p-8 space-y-8 max-w-[1200px]">
+        <FlashBanner flash={flash} />
         {isSectorOrAbove && (
           <div className="card p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-l-4 border-l-forest bg-surface-mint/25">
             <div>
@@ -117,7 +130,7 @@ export default function ReportsPage() {
         )}
         {isError && (
           <div className="rounded-2xl border-[1.5px] border-coral bg-surface-blush p-4 text-ink text-sm leading-relaxed">
-            {error?.response?.data?.detail || error.message}
+            {queryError?.response?.data?.detail || queryError.message}
             <button type="button" className="block mt-3 text-forest font-semibold hover:text-coral transition-colors" onClick={() => refetch()}>
               Retry
             </button>

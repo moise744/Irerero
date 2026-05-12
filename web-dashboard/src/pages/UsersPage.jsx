@@ -4,11 +4,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../services/api'
 import Header from '../components/layout/Header'
 import { useAuthStore } from '../hooks/useAuth'
+import { useFlashMessage } from '../hooks/useFlashMessage'
+import FlashBanner from '../components/ui/FlashBanner'
 
 export default function UsersPage() {
   const user = useAuthStore(s => s.user)
   const isAdmin = user?.role === 'sys_admin'
   const qc = useQueryClient()
+  const { flash, success, error } = useFlashMessage()
   
   const [showAdd, setShowAdd] = useState(false)
   const [newUser, setNewUser] = useState({ username: '', full_name: '', password: '', role: 'caregiver', centre_id: '' })
@@ -22,27 +25,36 @@ export default function UsersPage() {
   const wipeMutation = useMutation({
     mutationFn: (id) => api.post(`/users/${id}/wipe/`),
     onSuccess: () => {
-      alert('Remote wipe scheduled for device on next sync.')
+      success('Remote wipe scheduled for the device on next sync.')
       qc.invalidateQueries(['users-admin'])
-    }
+    },
+    onError: err => {
+      error(err?.response?.data?.detail || err.message || 'Remote wipe request failed.')
+    },
   })
 
   const mlMutation = useMutation({
     mutationFn: () => api.post('/ai/retrain/'),
-    onSuccess: (data) => alert(`ML Model Retrained Successfully!\nSensitivity: ${data.data.sensitivity_achieved}%`)
+    onSuccess: data => {
+      const s = data.data?.sensitivity_achieved ?? data.data?.sensitivity
+      success(s != null ? `ML model retrained successfully (sensitivity ${s}%).` : 'ML model retrained successfully.')
+    },
+    onError: err => error(err?.response?.data?.detail || err.message || 'Retrain failed.'),
   })
 
   const createUserMutation = useMutation({
     mutationFn: (userData) => api.post('/users/', userData),
     onSuccess: () => {
-      alert('User created successfully.')
+      success('User created successfully.')
       setShowAdd(false)
       setNewUser({ username: '', full_name: '', password: '', role: 'caregiver', centre_id: '' })
       qc.invalidateQueries(['users-admin'])
     },
     onError: (err) => {
-      alert(`Error creating user: ${err.response?.data?.detail || JSON.stringify(err.response?.data)}`)
-    }
+      error(
+        `Error creating user: ${err.response?.data?.detail || JSON.stringify(err.response?.data || err.message)}`,
+      )
+    },
   })
 
   if (!isAdmin)
@@ -62,6 +74,7 @@ export default function UsersPage() {
       <Header title="System Administration" />
       
       <div className="p-6">
+        <FlashBanner flash={flash} className="mb-4" />
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-extrabold font-display text-ink-display tracking-wide">User management</h2>
           <div className="flex gap-3">

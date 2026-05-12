@@ -3,21 +3,24 @@ import { useMutation } from '@tanstack/react-query'
 import { smsApi } from '../services/api'
 import Header from '../components/layout/Header'
 import { useAuthStore } from '../hooks/useAuth'
+import { useFlashMessage } from '../hooks/useFlashMessage'
+import FlashBanner from '../components/ui/FlashBanner'
 
 export default function SmsCampaignPage() {
   const user = useAuthStore(s => s.user)
   const isAuthorized = ['district', 'national', 'sys_admin'].includes(user?.role)
+  const { flash, success, error } = useFlashMessage()
 
   const [target, setTarget] = useState('all_parents')
-  const [message, setMessage] = useState('')
+  const [smsBody, setSmsBody] = useState('')
 
   const batchMutation = useMutation({
     mutationFn: data => smsApi.batch(data),
     onSuccess: () => {
-      alert('Batch SMS dispatch scheduled successfully.')
-      setMessage('')
+      success('Batch SMS dispatch scheduled successfully.')
+      setSmsBody('')
     },
-    onError: err => alert(`Error: ${err.response?.data?.detail || err.message}`),
+    onError: err => error(err?.response?.data?.detail || err.message || 'SMS batch failed.'),
   })
 
   if (!isAuthorized)
@@ -29,9 +32,9 @@ export default function SmsCampaignPage() {
 
   const handleSubmit = e => {
     e.preventDefault()
-    if (!message.trim()) return
+    if (!smsBody.trim()) return
     if (window.confirm('Are you sure you want to send this message to the selected group? This will incur SMS charges.')) {
-      batchMutation.mutate({ target_group: target, message })
+      batchMutation.mutate({ target_group: target, message: smsBody })
     }
   }
 
@@ -41,6 +44,7 @@ export default function SmsCampaignPage() {
 
       <div className="p-6 md:p-8">
         <div className="max-w-2xl card p-8">
+          <FlashBanner flash={flash} className="mb-6" />
           <h2 className="text-2xl font-extrabold font-display text-ink-display mb-2 tracking-wide">Compose batch SMS</h2>
           <p className="text-sm text-ink-muted mb-8 leading-relaxed">Send important announcements to parents or staff.</p>
 
@@ -63,15 +67,15 @@ export default function SmsCampaignPage() {
                 className="input-field resize-none min-h-[8rem]"
                 rows={5}
                 placeholder="Type your message here… Keep it concise."
-                value={message}
-                onChange={e => setMessage(e.target.value)}
+                value={smsBody}
+                onChange={e => setSmsBody(e.target.value)}
               />
               <p className="text-xs text-ink-muted mt-2 text-right">
-                {message.length} characters ({Math.ceil(message.length / 160) || 1} SMS part{Math.ceil(message.length / 160) > 1 ? 's' : ''})
+                {smsBody.length} characters ({Math.ceil(smsBody.length / 160) || 1} SMS part{Math.ceil(smsBody.length / 160) > 1 ? 's' : ''})
               </p>
             </div>
 
-            <button type="submit" disabled={batchMutation.isPending || !message.trim()} className="w-full btn-primary">
+            <button type="submit" disabled={batchMutation.isPending || !smsBody.trim()} className="w-full btn-primary">
               {batchMutation.isPending ? 'Sending…' : 'Dispatch SMS batch'}
             </button>
           </form>

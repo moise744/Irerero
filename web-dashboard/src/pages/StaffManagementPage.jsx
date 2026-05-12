@@ -3,11 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../services/api'
 import Header from '../components/layout/Header'
 import { useAuthStore } from '../hooks/useAuth'
+import { useFlashMessage } from '../hooks/useFlashMessage'
+import FlashBanner from '../components/ui/FlashBanner'
 
 export default function StaffManagementPage() {
   const user = useAuthStore(s => s.user)
   const isCentreMgr = user?.role === 'centre_mgr' || user?.role === 'sys_admin'
   const qc = useQueryClient()
+  const { flash, success, error } = useFlashMessage()
 
   const [showAdd, setShowAdd] = useState(false)
   const [newUser, setNewUser] = useState({ username: '', full_name: '', password: '', role: 'caregiver' })
@@ -21,17 +24,21 @@ export default function StaffManagementPage() {
   const createStaffMutation = useMutation({
     mutationFn: userData => api.post('/users/centre-staff/', userData),
     onSuccess: () => {
-      alert('Staff added successfully.')
+      success('Staff member added successfully.')
       setShowAdd(false)
       setNewUser({ username: '', full_name: '', password: '', role: 'caregiver' })
       qc.invalidateQueries(['centre-staff'])
     },
-    onError: err => alert(`Error: ${err.response?.data?.detail || err.message}`),
+    onError: err => error(err?.response?.data?.detail || err.message || 'Could not add staff.'),
   })
 
   const removeStaffMutation = useMutation({
     mutationFn: id => api.delete(`/users/centre-staff/${id}/`),
-    onSuccess: () => qc.invalidateQueries(['centre-staff']),
+    onSuccess: () => {
+      success('Staff member removed from this centre.')
+      qc.invalidateQueries(['centre-staff'])
+    },
+    onError: err => error(err?.response?.data?.detail || err.message || 'Could not remove staff.'),
   })
 
   if (!isCentreMgr)
@@ -51,6 +58,7 @@ export default function StaffManagementPage() {
       <Header title="Staff Management" />
 
       <div className="p-6 md:p-8">
+        <FlashBanner flash={flash} className="mb-6" />
         <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <h2 className="text-2xl font-extrabold font-display text-ink-display tracking-wide">Centre staff</h2>
           <button type="button" onClick={() => setShowAdd(true)} className="btn-primary">

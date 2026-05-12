@@ -2,14 +2,16 @@
 // P21: Custom report builder for National Administrator
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import api, { authenticatedDownload } from '../services/api'
-import { resolveApiBase } from '../services/api'
+import api, { authenticatedDownload, resolveApiBase } from '../services/api'
 import Header from '../components/layout/Header'
 import { useAuthStore } from '../hooks/useAuth'
+import { useFlashMessage } from '../hooks/useFlashMessage'
+import FlashBanner from '../components/ui/FlashBanner'
 
 export default function ReportBuilderPage() {
   const user = useAuthStore(s => s.user)
   const isNationalOrAdmin = ['national', 'sys_admin'].includes(user?.role)
+  const { flash, success, error } = useFlashMessage()
 
   const [params, setParams] = useState({
     report_type: 'nutritional_summary',
@@ -43,7 +45,27 @@ export default function ReportBuilderPage() {
 
   const handleGenerate = () => {
     setGenerated(true)
-    refetch()
+    window.setTimeout(async () => {
+      try {
+        const res = await refetch()
+        if (res.isError) {
+          error(res.error?.message || 'Could not load report data. Try again.')
+          return
+        }
+        success('Report generated with your selected filters.')
+      } catch (e) {
+        error(e?.message || 'Could not load report.')
+      }
+    }, 0)
+  }
+
+  const handleExportPdf = async () => {
+    try {
+      await authenticatedDownload(`${resolveApiBase()}/reports/sector/report.pdf`, 'custom_report.pdf')
+      success('Report exported successfully.')
+    } catch (e) {
+      error(`Export failed: ${e.message}`)
+    }
   }
 
   const REPORT_TYPES = [
@@ -58,8 +80,7 @@ export default function ReportBuilderPage() {
     <div className="flex-1 overflow-auto bg-canvas relative">
       <Header title="Custom Report Builder" />
       <div className="p-6 space-y-6">
-
-        {/* Builder form */}
+        <FlashBanner flash={flash} />
         <div className="card p-6">
           <h3 className="font-display font-bold text-xl text-ink-display tracking-wide mb-6">Build your report</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -155,7 +176,7 @@ export default function ReportBuilderPage() {
               </h3>
               <button
                 type="button"
-                onClick={() => authenticatedDownload(`${resolveApiBase()}/reports/sector/report.pdf`, 'custom_report.pdf')}
+                onClick={handleExportPdf}
                 className="px-4 py-2 bg-surface-blush text-coral text-sm rounded-lg hover:bg-surface-blush/80 font-semibold border border-coral/20 transition-colors"
               >
                 Export PDF

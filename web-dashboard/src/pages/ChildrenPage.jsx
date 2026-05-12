@@ -7,6 +7,8 @@ import StatusBadge from '../components/layout/StatusBadge'
 import Header from '../components/layout/Header'
 import GrowthChart from '../components/charts/GrowthChart'
 import { useAuthStore } from '../hooks/useAuth'
+import { useFlashMessage } from '../hooks/useFlashMessage'
+import FlashBanner from '../components/ui/FlashBanner'
 
 function MeasurementsTab({ childId }) {
   const { data, isLoading } = useQuery({
@@ -56,9 +58,16 @@ function AlertsTab({ childId }) {
     queryFn: () => childrenApi.alerts(childId).then(r => r.data.results || r.data || []),
   })
   const qc = useQueryClient()
+  const { flash, success, error } = useFlashMessage()
   const actionMutation = useMutation({
     mutationFn: ({ id, text }) => alertsApi.action(id, text),
-    onSuccess: () => qc.invalidateQueries(['child-alerts', childId]),
+    onSuccess: () => {
+      qc.invalidateQueries(['child-alerts', childId])
+      success('Alert marked as actioned.')
+    },
+    onError: err => {
+      error(err?.response?.data?.detail || err.message || 'Could not update alert.')
+    },
   })
   const [actionText, setActionText] = useState({})
 
@@ -78,6 +87,7 @@ function AlertsTab({ childId }) {
   }
   return (
     <div className="space-y-3">
+      <FlashBanner flash={flash} />
       {alerts.map(a => (
         <div key={a.id} className={`rounded-2xl border border-border-subtle p-5 ${severityBg[a.severity] || 'bg-surface-card'}`}>
           <div className="flex items-start justify-between">

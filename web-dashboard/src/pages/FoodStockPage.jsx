@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import Header from '../components/layout/Header'
 import { useAuthStore } from '../hooks/useAuth'
+import { useFlashMessage } from '../hooks/useFlashMessage'
+import FlashBanner from '../components/ui/FlashBanner'
 
 export default function FoodStockPage() {
   useAuthStore(s => s.user)
+  const { flash, success } = useFlashMessage()
 
   const [stock] = useState([
     { id: 1, item: 'Shisha Macari (Porridge Flour)', quantity: 25, unit: 'kg', minThreshold: 10, status: 'ok' },
@@ -29,6 +32,7 @@ export default function FoodStockPage() {
       <Header title="Food Stock Management" />
 
       <div className="p-6 md:p-8">
+        <FlashBanner flash={flash} className="mb-6" />
         <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <div>
             <h2 className="text-2xl font-extrabold font-display text-ink-display tracking-wide">Nutrition stock</h2>
@@ -37,7 +41,9 @@ export default function FoodStockPage() {
           <button
             type="button"
             className="btn-primary"
-            onClick={() => alert('Requesting more stock from Sector Coordinator...')}
+            onClick={() =>
+              success('Stock request recorded (demo). Connect a nutrition inventory API to notify your sector coordinator.')
+            }
           >
             Request stock
           </button>
@@ -69,7 +75,7 @@ export default function FoodStockPage() {
                     <button
                       type="button"
                       className="text-forest hover:text-coral text-xs font-semibold transition-colors"
-                      onClick={() => alert('Updating inventory counts...')}
+                      onClick={() => success('Inventory update saved (demo). Wire this action to your backend when stock tracking is ready.')}
                     >
                       Update
                     </button>

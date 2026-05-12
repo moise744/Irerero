@@ -39,8 +39,8 @@ class CaregiverDashboardView(APIView):
         today   = timezone.now().date()
         now     = timezone.now()
 
-        # Today's attendance — FR-061 item 1
-        att_today = Attendance.objects.filter(centre_id=centre) if hasattr(Attendance, 'centre_id') else Attendance.objects.filter(child__centre_id=centre, date=today)
+        # Today's attendance — FR-061 item 1 (Attendance is per child+date; filter by child's centre)
+        att_today = Attendance.objects.filter(child__centre_id=centre, date=today)
         present  = att_today.filter(status=AttendanceStatus.PRESENT).count()
         absent   = att_today.filter(status=AttendanceStatus.ABSENT).count()
 

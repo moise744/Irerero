@@ -5,6 +5,19 @@ from django.template.loader import render_to_string
 from django.conf import settings
 
 
+def _child_photo_file_uri(child) -> str | None:
+    """WeasyPrint resolves images best from file:// URIs when rendering from an HTML string."""
+    if not getattr(child, "photo", None) or not child.photo:
+        return None
+    try:
+        p = Path(child.photo.path).resolve()
+        if p.is_file():
+            return p.as_uri()
+    except Exception:
+        pass
+    return None
+
+
 def _save_pdf(html_content: str, filename: str) -> str:
     """Render HTML to PDF using WeasyPrint and save to media directory."""
     try:
@@ -80,6 +93,7 @@ def generate_child_growth_report(child) -> str:
         "guardian_name": child.guardian_name,
         "guardian_phone": child.guardian_phone,
         "centre_name": child.centre.centre_name,
+        "photo_uri": _child_photo_file_uri(child),
         "current_status": current_status,
         "current_status_label": STATUS_LABEL_EN.get(current_status, current_status),
         "generated_date": timezone.now().strftime("%d %B %Y"),

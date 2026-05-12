@@ -4,6 +4,8 @@ import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { alertsApi } from '../../services/api'
 import { useWebSocket } from '../../hooks/useWebSocket'
+import { useFlashMessage } from '../../hooks/useFlashMessage'
+import FlashBanner from '../ui/FlashBanner'
 
 const SEV_COLOUR = {
   urgent: 'border-l-coral bg-surface-blush',
@@ -21,6 +23,7 @@ export default function AlertsPanel({ compact = false }) {
   const [liveAlerts, setLiveAlerts] = useState([])
   const [actioningId, setActioningId] = useState(null)
   const [actionText, setActionText] = useState('')
+  const { flash, success, error } = useFlashMessage()
 
   const { data } = useQuery({
     queryKey: ['alerts', 'active'],
@@ -39,6 +42,10 @@ export default function AlertsPanel({ compact = false }) {
       qc.invalidateQueries(['alerts'])
       setActioningId(null)
       setActionText('')
+      success('Alert recorded as actioned.')
+    },
+    onError: err => {
+      error(err?.response?.data?.detail || err.message || 'Could not save action.')
     },
   })
 
@@ -56,6 +63,7 @@ export default function AlertsPanel({ compact = false }) {
 
   return (
     <div className="card p-6">
+      <FlashBanner flash={flash} className="mb-4" />
       <h3 className="font-display font-semibold text-ink-display text-base tracking-wide mb-4">
         Active alerts ({alerts.length})
       </h3>

@@ -8,6 +8,18 @@ from .models import Child, Centre
 from auth_module.models import Role
 
 
+def _absolute_media_url(request, url):
+    """Web dashboard runs on a different origin than the API; relative /media/... breaks <img src>."""
+    if not url:
+        return url
+    s = str(url)
+    if s.startswith(("http://", "https://")):
+        return s
+    if request is not None:
+        return request.build_absolute_uri(s)
+    return s
+
+
 class CentreSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Centre
@@ -41,6 +53,8 @@ class ChildListSerializer(serializers.ModelSerializer):
             data.pop("guardian_name", None)
             data.pop("guardian_phone", None)
             data.pop("home_village", None)
+        elif data.get("photo"):
+            data["photo"] = _absolute_media_url(request, data["photo"])
         return data
 
 
@@ -78,6 +92,8 @@ class ChildDetailSerializer(serializers.ModelSerializer):
                 data["full_name"] = "Anonymised"
                 for field in ["photo", "guardian_name", "guardian_phone", "home_village", "notes", "is_orphan", "has_disability", "hiv_exposure_status", "chronic_conditions"]:
                     data.pop(field, None)
+        if data.get("photo"):
+            data["photo"] = _absolute_media_url(request, data["photo"])
         return data
 
 

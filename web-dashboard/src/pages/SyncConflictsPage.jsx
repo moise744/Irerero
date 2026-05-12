@@ -1,13 +1,15 @@
-import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../services/api'
 import Header from '../components/layout/Header'
 import { useAuthStore } from '../hooks/useAuth'
+import { useFlashMessage } from '../hooks/useFlashMessage'
+import FlashBanner from '../components/ui/FlashBanner'
 
 export default function SyncConflictsPage() {
   const user = useAuthStore(s => s.user)
   const isCentreMgr = user?.role === 'centre_mgr' || user?.role === 'sys_admin'
   const qc = useQueryClient()
+  const { flash, success, error } = useFlashMessage()
 
   const { data: conflicts, isLoading } = useQuery({
     queryKey: ['sync-conflicts'],
@@ -18,10 +20,10 @@ export default function SyncConflictsPage() {
   const resolveMutation = useMutation({
     mutationFn: ({ id, resolution }) => api.post(`/sync/conflicts/${id}/resolve/`, { resolution }),
     onSuccess: () => {
-      alert('Conflict resolved.')
+      success('Conflict resolved successfully.')
       qc.invalidateQueries(['sync-conflicts'])
     },
-    onError: err => alert(`Error: ${err.response?.data?.detail || err.message}`),
+    onError: err => error(err?.response?.data?.detail || err.message || 'Could not resolve conflict.'),
   })
 
   if (!isCentreMgr)
@@ -36,6 +38,7 @@ export default function SyncConflictsPage() {
       <Header title="Sync Conflicts" />
 
       <div className="p-6 md:p-8">
+        <FlashBanner flash={flash} className="mb-6" />
         <div className="mb-8">
           <h2 className="text-2xl font-extrabold font-display text-ink-display tracking-wide">Resolve data conflicts</h2>
           <p className="text-sm text-ink-muted mt-2 leading-relaxed">Review cases where two offline devices edited the same record.</p>

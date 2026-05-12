@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { referralsApi, authenticatedDownload, resolveApiBase } from '../services/api'
 import Header from '../components/layout/Header'
+import { useFlashMessage } from '../hooks/useFlashMessage'
+import FlashBanner from '../components/ui/FlashBanner'
 
 export default function ReferralsPage() {
   const [filterStatus, setFilterStatus] = useState('pending')
   const [downloading, setDownloading] = useState(null)
+  const { flash, success, error } = useFlashMessage()
 
   const { data: referrals, isLoading, isError } = useQuery({
     queryKey: ['referrals', filterStatus],
@@ -17,8 +20,9 @@ export default function ReferralsPage() {
     setDownloading(id)
     try {
       await authenticatedDownload(`${resolveApiBase()}/referrals/${id}/slip.pdf`, `referral_${id}.pdf`)
+      success('Referral slip downloaded successfully.')
     } catch (e) {
-      alert(`Download failed: ${e.message}`)
+      error(`Download failed: ${e.message}`)
     } finally {
       setDownloading(null)
     }
@@ -28,6 +32,7 @@ export default function ReferralsPage() {
     <div className="flex-1 overflow-auto bg-canvas relative">
       <Header title="Referrals Management" />
       <div className="p-6 md:p-8 space-y-8">
+        <FlashBanner flash={flash} />
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 card p-6">
           <h2 className="font-bold text-lg text-ink-display font-display tracking-wide">Referral follow-ups</h2>
           <select

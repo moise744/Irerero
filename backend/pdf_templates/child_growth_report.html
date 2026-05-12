@@ -27,6 +27,9 @@
 
 <div class="section">
   <h3>Child Profile</h3>
+  {% if photo_uri %}
+  <p style="margin-bottom:10px;"><img src="{{ photo_uri }}" alt="Child photo" style="max-width:140px;max-height:140px;border:1px solid #ccc;border-radius:4px;"/></p>
+  {% endif %}
   <table>
     <tr><td><strong>Name:</strong> {{ child_name }}</td>
         <td><strong>Irerero ID:</strong> {{ irerero_id }}</td></tr>
