@@ -3,8 +3,8 @@ import { NavLink } from 'react-router-dom'
 import { useAuthStore } from '../../hooks/useAuth'
 
 function NavGlyph({ name }) {
-  const c = 'w-[18px] h-[18px] shrink-0 opacity-90'
-  const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.75, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  const c = 'w-[18px] h-[18px] shrink-0'
+  const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }
   switch (name) {
     case 'home':
       return (
@@ -64,7 +64,7 @@ const baseLinks = [
 export default function Sidebar() {
   const role = useAuthStore(s => s.user?.role)
   let links = [...baseLinks]
-  
+
   if (['centre_mgr', 'sys_admin'].includes(role)) {
     links.push({ to: '/staff', label: 'Staff', icon: 'users', end: false })
     links.push({ to: '/sync-conflicts', label: 'Conflicts', icon: 'alerts', end: false })
@@ -82,22 +82,22 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-56 shrink-0 min-h-screen bg-primary text-stone-100 flex flex-col border-r border-black/10">
-      <div className="p-5 border-b border-white/10">
-        <p className="font-display text-xl font-semibold tracking-tight text-white">Irerero</p>
-        <p className="text-xs text-teal/90 mt-1.5 leading-snug">Early childhood programmes</p>
+    <aside className="w-56 shrink-0 min-h-screen bg-canvas flex flex-col border-r border-border-subtle shadow-nav">
+      <div className="p-6 border-b border-border-subtle">
+        <p className="font-display text-xl font-extrabold text-ink-display tracking-wide">Irerero</p>
+        <p className="text-xs text-ink-muted mt-2 leading-relaxed font-medium">Early childhood programmes</p>
       </div>
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {links.map(l => (
           <NavLink
             key={l.to}
             to={l.to}
             end={l.end}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-teal-300/80 ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-canvas ${
                 isActive
-                  ? 'bg-white/15 text-white font-medium shadow-inner'
-                  : 'text-white/80 hover:bg-white/10 hover:text-white hover:translate-x-1'
+                  ? 'bg-coral/12 text-coral shadow-none'
+                  : 'text-ink hover:bg-surface-blush/80 hover:text-forest'
               }`
             }
           >

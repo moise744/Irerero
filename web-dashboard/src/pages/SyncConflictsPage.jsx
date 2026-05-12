@@ -9,7 +9,6 @@ export default function SyncConflictsPage() {
   const isCentreMgr = user?.role === 'centre_mgr' || user?.role === 'sys_admin'
   const qc = useQueryClient()
 
-  // Fetch sync conflicts (mocking endpoint logic since it was partially stubbed)
   const { data: conflicts, isLoading } = useQuery({
     queryKey: ['sync-conflicts'],
     queryFn: () => api.get('/sync/conflicts/').then(r => r.data),
@@ -22,57 +21,75 @@ export default function SyncConflictsPage() {
       alert('Conflict resolved.')
       qc.invalidateQueries(['sync-conflicts'])
     },
-    onError: (err) => alert(`Error: ${err.response?.data?.detail || err.message}`)
+    onError: err => alert(`Error: ${err.response?.data?.detail || err.message}`),
   })
 
-  if (!isCentreMgr) return <div className="p-8 text-center">Access Restricted to Centre Managers.</div>
+  if (!isCentreMgr)
+    return (
+      <div className="p-8 text-center text-ink-muted bg-canvas min-h-[40vh] flex items-center justify-center">
+        Access restricted to centre managers.
+      </div>
+    )
 
   return (
     <div className="flex-1 overflow-auto bg-canvas relative">
       <Header title="Sync Conflicts" />
-      
-      <div className="p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold font-display text-ink tracking-tight">Resolve Data Conflicts</h2>
-          <p className="text-sm text-stone-500 mt-1">Review cases where two offline devices edited the same record.</p>
+
+      <div className="p-6 md:p-8">
+        <div className="mb-8">
+          <h2 className="text-2xl font-extrabold font-display text-ink-display tracking-wide">Resolve data conflicts</h2>
+          <p className="text-sm text-ink-muted mt-2 leading-relaxed">Review cases where two offline devices edited the same record.</p>
         </div>
 
-        {isLoading ? <p>Loading conflicts...</p> : (
-          <div className="space-y-4">
+        {isLoading ? (
+          <p className="text-ink-muted">Loading conflicts…</p>
+        ) : (
+          <div className="space-y-6">
             {(conflicts?.length === 0 || !conflicts) && (
-              <div className="bg-teal/10 text-teal p-5 rounded-xl border border-teal/20 font-semibold flex items-center gap-3 shadow-sm">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                All caught up! No sync conflicts to resolve.
+              <div className="bg-surface-mint/50 text-forest p-6 rounded-2xl border border-sage/30 font-semibold flex items-center gap-3">
+                <svg className="w-5 h-5 shrink-0 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                All caught up — no sync conflicts to resolve.
               </div>
             )}
             {(conflicts || []).map(c => (
-              <div key={c.id} className="card p-6 border-l-4 border-l-danger border-danger/10">
+              <div key={c.id} className="card p-6 border-l-4 border-l-coral">
                 <div className="flex justify-between items-start mb-5">
                   <div>
-                    <h3 className="font-bold text-lg text-danger font-display tracking-tight">Conflict ID: {c.id}</h3>
-                    <p className="text-sm text-stone-600 font-semibold uppercase tracking-wider mt-1">Model: <span className="text-primary">{c.model_name}</span> | Record: <span className="text-primary">{c.record_id}</span></p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6 mb-6">
-                  <div className="p-4 bg-stone-50 rounded-lg border border-stone-200 shadow-inner">
-                    <h4 className="font-bold text-xs uppercase text-stone-500 mb-3 tracking-wider">Server Version</h4>
-                    <pre className="text-xs overflow-auto text-ink/80 font-mono">{JSON.stringify(c.server_data, null, 2)}</pre>
-                  </div>
-                  <div className="p-4 bg-accent/5 rounded-lg border border-accent/20 shadow-inner">
-                    <h4 className="font-bold text-xs uppercase text-accent mb-3 tracking-wider">Device Version (Conflict)</h4>
-                    <pre className="text-xs overflow-auto text-ink/80 font-mono">{JSON.stringify(c.client_data, null, 2)}</pre>
+                    <h3 className="font-bold text-lg text-coral font-display tracking-wide">Conflict ID: {c.id}</h3>
+                    <p className="text-sm text-ink-muted font-medium mt-2">
+                      Model: <span className="text-forest">{c.model_name}</span> · Record:{' '}
+                      <span className="text-forest">{c.record_id}</span>
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex gap-3">
-                  <button onClick={() => resolveMutation.mutate({ id: c.id, resolution: 'keep_server' })}
-                    className="px-5 py-2.5 bg-stone-100 text-stone-700 rounded-lg text-sm font-bold hover:bg-stone-200 transition-colors">
-                    Keep Server Version
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 bg-canvas rounded-2xl border border-border-subtle">
+                    <h4 className="font-semibold text-xs text-forest mb-3 tracking-wide">Server version</h4>
+                    <pre className="text-xs overflow-auto text-ink-muted font-mono leading-relaxed">{JSON.stringify(c.server_data, null, 2)}</pre>
+                  </div>
+                  <div className="p-4 bg-surface-blush/50 rounded-2xl border border-coral/20">
+                    <h4 className="font-semibold text-xs text-coral mb-3 tracking-wide">Device version (conflict)</h4>
+                    <pre className="text-xs overflow-auto text-ink-muted font-mono leading-relaxed">{JSON.stringify(c.client_data, null, 2)}</pre>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => resolveMutation.mutate({ id: c.id, resolution: 'keep_server' })}
+                    className="btn-ghost"
+                  >
+                    Keep server version
                   </button>
-                  <button onClick={() => resolveMutation.mutate({ id: c.id, resolution: 'accept_client' })}
-                    className="px-5 py-2.5 btn-gradient rounded-lg text-sm font-bold">
-                    Accept Device Version
+                  <button
+                    type="button"
+                    onClick={() => resolveMutation.mutate({ id: c.id, resolution: 'accept_client' })}
+                    className="btn-primary"
+                  >
+                    Accept device version
                   </button>
                 </div>
               </div>

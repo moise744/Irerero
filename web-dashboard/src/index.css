@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:ital,opsz,wght@0,6..12,300;0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,22 +9,87 @@
     @apply antialiased;
   }
   body {
-    @apply font-sans;
-    color: theme('colors.ink');
-    background-color: theme('colors.canvas');
+    @apply font-sans text-ink bg-canvas;
+    font-size: 16px;
+    line-height: 1.6;
+    letter-spacing: normal;
+  }
+  h1,
+  h2.font-display,
+  .font-display.text-display-lg,
+  .font-display.text-3xl {
+    letter-spacing: 0.01em;
+    line-height: 1.2;
   }
 }
 
 @layer components {
-  .btn-gradient {
-    @apply text-white border-0 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5;
-    background-image: theme('backgroundImage.btn-gradient');
+  .btn-primary {
+    @apply inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold tracking-wide transition-colors duration-200 ease-out disabled:opacity-60 disabled:pointer-events-none;
+    letter-spacing: 0.01em;
   }
-  .btn-gradient:hover {
-    background-image: theme('backgroundImage.btn-gradient-hover');
+  .btn-primary:hover:not(:disabled) {
+    @apply bg-coral-hover;
   }
-  
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-forest text-white text-sm font-semibold tracking-wide transition-colors duration-200 ease-out disabled:opacity-60;
+    letter-spacing: 0.01em;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    @apply bg-forest-hover;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg border-[1.5px] border-forest bg-transparent text-forest text-sm font-semibold tracking-wide transition-colors duration-200 ease-out;
+    letter-spacing: 0.01em;
+  }
+  .btn-ghost:hover {
+    @apply bg-forest/5;
+  }
+
+  .field-label {
+    @apply block text-[13px] font-medium text-ink mb-2;
+  }
+
+  .input-field {
+    @apply w-full rounded-lg border-[1.5px] border-border-warm bg-surface-card px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-placeholder shadow-none transition-colors duration-150 outline-none focus:border-sage focus:ring-2 focus:ring-sage/25;
+  }
+
+  .input-field-error {
+    @apply border-coral focus:border-coral focus:ring-coral/20;
+  }
+
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-stone-100 transition-all duration-300 hover:shadow-md;
+    @apply rounded-2xl border border-border-subtle bg-surface-card transition-colors duration-150;
+    box-shadow: none;
+  }
+
+  .table-wrap {
+    @apply overflow-x-auto rounded-2xl border border-border-subtle;
+  }
+
+  .table-standard thead {
+    @apply bg-surface-blush/80 text-forest text-left text-xs font-semibold tracking-wide;
+  }
+
+  .table-standard thead th {
+    @apply px-4 py-3.5 font-semibold text-[13px] normal-case;
+  }
+
+  .table-standard tbody {
+    @apply divide-y divide-border-subtle;
+  }
+
+  .table-standard tbody tr {
+    @apply hover:bg-surface-blush/60 transition-colors;
+  }
+
+  .modal-overlay {
+    @apply absolute inset-0 flex items-center justify-center z-50 p-4 bg-forest-deep/30;
+  }
+
+  .spinner-ring {
+    @apply h-9 w-9 border-[3px] border-border-subtle border-t-forest rounded-full animate-spin;
   }
 }

@@ -1,6 +1,5 @@
 // src/components/sms/SmsInbox.jsx
 // Real-time SMS Inbox — MockSmsProvider pushes via WebSocket — FR-080
-// Dashboard SMS Inbox panel that updates live without page reload
 
 import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -8,24 +7,22 @@ import { smsApi } from '../../services/api'
 import { useWebSocket } from '../../hooks/useWebSocket'
 
 const MSG_TYPE_LABELS = {
-  sam_alert:        { label: 'SAM Alert',          colour: 'bg-brand-accent/10 text-brand-accent' },
-  referral_created: { label: 'Referral',            colour: 'bg-blue-500/10 text-blue-700' },
-  weekly_progress:  { label: 'Weekly Update',       colour: 'bg-brand-success/10 text-brand-success' },
-  absence_followup: { label: 'Absence Follow-up',   colour: 'bg-orange-500/10 text-orange-600' },
-  batch_reminder:   { label: 'Batch Reminder',      colour: 'bg-purple-500/10 text-purple-600' },
+  sam_alert: { label: 'SAM alert', colour: 'bg-surface-blush text-coral border border-coral/20' },
+  referral_created: { label: 'Referral', colour: 'bg-surface-mint/80 text-forest border border-sage/25' },
+  weekly_progress: { label: 'Weekly update', colour: 'bg-surface-mint/80 text-forest border border-sage/25' },
+  absence_followup: { label: 'Absence follow-up', colour: 'bg-surface-cream text-amber border border-amber/25' },
+  batch_reminder: { label: 'Batch reminder', colour: 'bg-surface-flex text-forest border border-sage/20' },
 }
 
 export default function SmsInbox() {
   const [live, setLive] = useState([])
 
-  // Load historical SMS log from API — FR-080
   const { data: historical = [] } = useQuery({
     queryKey: ['sms-log'],
-    queryFn:  () => smsApi.log().then(r => r.data.results || r.data),
+    queryFn: () => smsApi.log().then(r => r.data.results || r.data),
     refetchInterval: 30_000,
   })
 
-  // Real-time push via WebSocket — architecture §5.4
   const onWsMessage = useCallback(msg => {
     if (msg.type === 'sms.new' || msg.data) {
       setLive(prev => [msg.data || msg, ...prev].slice(0, 50))
@@ -36,44 +33,56 @@ export default function SmsInbox() {
   const all = [...live, ...historical].slice(0, 100)
 
   return (
-    <div className="bg-white rounded-xl border border-stone-200/90 shadow-sm p-5">
+    <div className="card p-6">
       <div className="flex items-center justify-between mb-4 gap-3">
-        <h3 className="font-display font-semibold text-stone-900 text-base">SMS inbox (simulated)</h3>
-        <span className="text-xs bg-brand-success/10 text-brand-success px-2.5 py-1 rounded-md font-medium tabular-nums shrink-0">
+        <h3 className="font-display font-semibold text-ink-display text-base tracking-wide">SMS inbox (simulated)</h3>
+        <span className="text-xs bg-surface-mint/90 text-forest px-2.5 py-1 rounded-lg font-semibold tabular-nums shrink-0 border border-sage/25">
           {live.length} live
         </span>
       </div>
 
       {all.length === 0 ? (
-        <p className="text-gray-400 text-sm text-center py-8">
+        <p className="text-ink-muted text-sm text-center py-8 leading-relaxed">
           No messages yet. Trigger an alert to see simulated SMS appear here in real-time.
         </p>
       ) : (
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
           {all.map((sms, i) => {
-            const type  = MSG_TYPE_LABELS[sms.msg_type] || { label: sms.msg_type, colour: 'bg-gray-100 text-gray-700' }
+            const type =
+              MSG_TYPE_LABELS[sms.msg_type] || {
+                label: sms.msg_type,
+                colour: 'bg-surface-card text-ink border border-border-subtle',
+              }
             const isNew = i < live.length
             return (
-              <div key={sms.id || i}
-                className={`border rounded-lg p-3 ${isNew ? 'border-blue-200 bg-blue-500/5' : 'border-stone-200'}`}>
+              <div
+                key={sms.id || i}
+                className={`rounded-2xl p-4 border ${
+                  isNew ? 'border-sage/40 bg-surface-mint/40' : 'border-border-subtle bg-surface-card'
+                }`}
+              >
                 <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${type.colour}`}>
-                      {type.label}
-                    </span>
-                    {isNew && <span className="text-xs bg-blue-500/10 text-blue-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">LIVE</span>}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-xs px-2 py-0.5 rounded-lg font-semibold ${type.colour}`}>{type.label}</span>
+                    {isNew && (
+                      <span className="text-xs bg-coral/12 text-coral px-2 py-0.5 rounded-lg font-semibold tracking-wide">
+                        Live
+                      </span>
+                    )}
                   </div>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-ink-placeholder">
                     {sms.sent_at ? new Date(sms.sent_at).toLocaleTimeString() : 'just now'}
                   </span>
                 </div>
-                <p className="text-sm font-medium text-gray-700">{sms.recipient_phone}</p>
-                <p className="text-sm text-gray-600 mt-1">{sms.message}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-xs font-semibold ${sms.status === 'delivered' ? 'text-brand-success' : 'text-brand-accent'}`}>
+                <p className="text-sm font-semibold text-ink">{sms.recipient_phone}</p>
+                <p className="text-sm text-ink-muted mt-1 leading-relaxed">{sms.message}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span
+                    className={`text-xs font-semibold ${sms.status === 'delivered' ? 'text-sage' : 'text-coral'}`}
+                  >
                     {sms.status === 'delivered' ? '✓ Delivered' : '✗ Failed'}
                   </span>
-                  <span className="text-xs text-gray-400">via {sms.provider || 'mock'}</span>
+                  <span className="text-xs text-ink-placeholder">via {sms.provider || 'mock'}</span>
                 </div>
               </div>
             )

@@ -12,18 +12,18 @@ export default function Header({ title }) {
   }
 
   return (
-    <header className="shrink-0 bg-white/90 backdrop-blur-sm border-b border-stone-200 px-6 py-3.5 flex items-center justify-between gap-4">
-      <h2 className="text-base font-semibold text-stone-900 truncate font-display">{title}</h2>
+    <header className="shrink-0 bg-canvas border-b border-border-subtle px-6 py-4 flex items-center justify-between gap-4 shadow-nav">
+      <h2 className="text-base font-semibold text-ink-display truncate font-display tracking-wide">{title}</h2>
       <div className="flex items-center gap-4 shrink-0">
-        <span className="text-sm text-stone-500 hidden sm:inline max-w-[220px] truncate">
+        <span className="text-sm text-ink-muted hidden sm:inline max-w-[220px] truncate">
           {user?.full_name}
-          <span className="text-stone-400"> · </span>
-          <span className="text-stone-600">{user?.role_display || user?.role}</span>
+          <span className="text-ink-placeholder"> · </span>
+          <span className="text-ink">{user?.role_display || user?.role}</span>
         </span>
         <button
           type="button"
           onClick={handleLogout}
-          className="text-sm font-medium text-red-700 hover:text-red-800 rounded-md px-2 py-1 -mr-2 hover:bg-red-50 transition-colors"
+          className="text-sm font-semibold text-coral hover:text-coral-hover rounded-lg px-3 py-2 hover:bg-coral/10 transition-colors duration-200"
         >
           Log out
         </button>

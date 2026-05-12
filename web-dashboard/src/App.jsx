@@ -101,7 +101,7 @@ function ProtectedShell() {
   useInactivityTimer()
 
   return (
-    <div className="flex h-screen overflow-hidden bg-stone-100">
+    <div className="flex h-screen overflow-hidden bg-canvas">
       <Sidebar />
       <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
         <Outlet />
@@ -116,12 +116,9 @@ export default function App() {
 
   if (!bootstrapped) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-stone-100 text-stone-600">
-        <div
-          className="h-9 w-9 border-[3px] border-stone-300 border-t-[#0f2d26] rounded-full animate-spin"
-          aria-hidden
-        />
-        <p className="text-sm">Loading…</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-canvas text-ink-muted">
+        <div className="spinner-ring" aria-hidden />
+        <p className="text-sm font-medium">Loading…</p>
       </div>
     )
   }

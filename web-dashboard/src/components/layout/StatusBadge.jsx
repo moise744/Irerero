@@ -1,18 +1,21 @@
-// src/components/layout/StatusBadge.jsx
-// Colour + text — NFR-016 (never colour alone)
+// Nutritional status badge — brand palette only
 const CONFIG = {
-  sam: { bg: 'bg-brand-accent/10', text: 'text-brand-accent', label: 'SAM' },
-  mam: { bg: 'bg-orange-500/10', text: 'text-orange-600', label: 'MAM' },
-  stunted: { bg: 'bg-orange-500/10', text: 'text-orange-600', label: 'Stunted' },
-  severely_stunted: { bg: 'bg-brand-accent/10', text: 'text-brand-accent', label: 'Sev. stunted' },
-  underweight: { bg: 'bg-orange-500/10', text: 'text-orange-600', label: 'Underweight' },
-  at_risk: { bg: 'bg-orange-500/10', text: 'text-orange-600', label: 'At risk' },
-  normal: { bg: 'bg-brand-success/10', text: 'text-brand-success', label: 'Normal' },
+  sam: { bg: 'bg-surface-blush', text: 'text-coral', label: 'SAM' },
+  mam: { bg: 'bg-surface-cream', text: 'text-amber', label: 'MAM' },
+  stunted: { bg: 'bg-surface-cream', text: 'text-amber', label: 'Stunted' },
+  severely_stunted: { bg: 'bg-surface-blush', text: 'text-coral', label: 'Sev. stunted' },
+  underweight: { bg: 'bg-surface-cream', text: 'text-amber', label: 'Underweight' },
+  at_risk: { bg: 'bg-surface-cream', text: 'text-amber', label: 'At risk' },
+  normal: { bg: 'bg-surface-mint/90', text: 'text-forest', label: 'Normal' },
 }
+
 export default function StatusBadge({ status }) {
-  const c = CONFIG[status] || CONFIG.normal
+  const key = String(status || 'normal').toLowerCase()
+  const c = CONFIG[key] || CONFIG.normal
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${c.bg} ${c.text}`}>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border border-border-subtle/80 ${c.bg} ${c.text}`}
+    >
       {c.label}
     </span>
   )

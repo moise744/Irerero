@@ -44,8 +44,8 @@ function MLRetrainSection() {
   return (
     <div className="card p-6">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="w-10 h-10 rounded-xl bg-surface-mint flex items-center justify-center border border-sage/25">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-forest" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
@@ -61,7 +61,7 @@ function MLRetrainSection() {
       <button
         onClick={() => mlMutation.mutate()}
         disabled={mlMutation.isPending}
-        className="w-full px-4 py-2.5 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
+        className="w-full px-4 py-2.5 bg-forest text-white rounded-lg text-sm font-semibold hover:bg-forest-hover disabled:opacity-50 transition-colors duration-200"
       >
         {mlMutation.isPending ? (
           <span className="flex items-center justify-center gap-2">
@@ -71,14 +71,14 @@ function MLRetrainSection() {
         ) : 'Start Model Training'}
       </button>
       {result && !result.error && (
-        <div className="mt-4 rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">
+        <div className="mt-4 rounded-2xl bg-surface-mint/80 border border-sage/30 p-3 text-sm text-forest">
           <p className="font-bold">✓ Training Complete</p>
           <p className="mt-1">Sensitivity: {result.sensitivity_achieved || result.sensitivity}%</p>
           {result.model_version && <p>Model Version: {result.model_version}</p>}
         </div>
       )}
       {result?.error && (
-        <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">
+        <div className="mt-4 rounded-2xl bg-surface-blush border border-coral/25 p-3 text-sm text-coral">
           Error: {result.error}
         </div>
       )}
@@ -113,8 +113,8 @@ function LmsUpdateSection() {
   return (
     <div className="card p-6">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="w-10 h-10 rounded-xl bg-surface-cream flex items-center justify-center border border-amber/25">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-forest" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
           </svg>
         </div>
@@ -127,12 +127,12 @@ function LmsUpdateSection() {
         Upload updated WHO LMS reference data (JSON format) to recalculate Z-scores.
         Current data: WHO 2006 Child Growth Standards.
       </p>
-      <label className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-stone-300 rounded-lg text-sm font-semibold cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+      <label className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-border-warm rounded-xl text-sm font-semibold cursor-pointer hover:border-sage hover:bg-surface-mint/40 transition-colors duration-200 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
         {uploading ? 'Uploading…' : 'Upload LMS JSON File'}
         <input type="file" accept=".json" className="hidden" onChange={handleUpload} disabled={uploading} />
       </label>
       {message && (
-        <div className={`mt-4 rounded-lg p-3 text-sm ${message.type === 'success' ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-amber-50 border border-amber-200 text-amber-800'}`}>
+        <div className={`mt-4 rounded-2xl p-3 text-sm border ${message.type === 'success' ? 'bg-surface-mint/80 border-sage/30 text-forest' : 'bg-surface-cream border-amber/30 text-ink'}`}>
           {message.text}
         </div>
       )}
@@ -152,8 +152,8 @@ function DeviceManagementSection() {
   return (
     <div className="card p-6">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="w-10 h-10 rounded-xl bg-surface-cream flex items-center justify-center border border-amber/20">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-amber" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
         </div>
@@ -169,12 +169,12 @@ function DeviceManagementSection() {
       ) : (
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {users.slice(0, 20).map(u => (
-            <div key={u.id} className="flex items-center justify-between p-2.5 rounded-lg bg-stone-50 text-sm">
+            <div key={u.id} className="flex items-center justify-between p-2.5 rounded-xl bg-canvas text-sm border border-border-subtle">
               <div>
                 <span className="font-medium text-ink">{u.full_name}</span>
                 <span className="text-stone-400 ml-2 text-xs">{u.role_display || u.role}</span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${u.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-lg font-semibold border ${u.is_active ? 'bg-surface-mint/80 text-forest border-sage/30' : 'bg-surface-blush text-coral border-coral/20'}`}>
                 {u.is_active ? 'Online' : 'Inactive'}
               </span>
             </div>
@@ -203,8 +203,8 @@ function MaintenanceSection() {
   return (
     <div className="card p-6">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="w-10 h-10 rounded-xl bg-surface-blush flex items-center justify-center border border-coral/15">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
@@ -218,19 +218,16 @@ function MaintenanceSection() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold text-stone-600 mb-1">Date</label>
-            <input type="date" value={date} onChange={e => setDate(e.target.value)} required
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="input-field" />
           </div>
           <div>
             <label className="block text-xs font-bold text-stone-600 mb-1">Time (UTC)</label>
-            <input type="time" value={time} onChange={e => setTime(e.target.value)} required
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+            <input type="time" value={time} onChange={e => setTime(e.target.value)} required className="input-field" />
           </div>
         </div>
         <div>
           <label className="block text-xs font-bold text-stone-600 mb-1">Duration (hours)</label>
-          <select value={duration} onChange={e => setDuration(e.target.value)}
-            className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm">
+          <select value={duration} onChange={e => setDuration(e.target.value)} className="input-field">
             <option value="1">1 hour</option>
             <option value="2">2 hours</option>
             <option value="4">4 hours</option>
@@ -241,13 +238,13 @@ function MaintenanceSection() {
           <label className="block text-xs font-bold text-stone-600 mb-1">Message</label>
           <textarea value={message} onChange={e => setMessage(e.target.value)}
             placeholder="Scheduled system maintenance for infrastructure upgrade…"
-            className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:ring-2 focus:ring-primary/20 outline-none" />
+            className="input-field h-20 resize-none" />
         </div>
-        <button type="submit" className="w-full px-4 py-2.5 bg-orange-600 text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors">
+        <button type="submit" className="w-full px-4 py-2.5 btn-primary">
           Schedule & Notify Users
         </button>
         {sent && (
-          <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">
+          <div className="rounded-2xl bg-surface-mint/80 border border-sage/30 p-3 text-sm text-forest">
             ✓ Maintenance scheduled. All users will be notified 48 hours in advance.
           </div>
         )}
@@ -267,8 +264,8 @@ function AuditLogSection() {
   return (
     <div className="card p-6 lg:col-span-2">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-lg bg-slate-500/10 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="w-10 h-10 rounded-xl bg-surface-mint/50 flex items-center justify-center border border-border-subtle">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-forest" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
