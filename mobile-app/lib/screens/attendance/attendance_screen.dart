@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import '../../db/database_helper.dart';
 import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
+import '../../theme/irerero_colors.dart';
 import '../../widgets/child_avatar.dart';
 
 class AttendanceScreen extends StatefulWidget {
@@ -94,7 +95,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (mounted) {
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ibarura ryatunganijwe!'), backgroundColor: Color(0xFF00d084)),
+        const SnackBar(content: Text('Ibarura ryatunganijwe!'), backgroundColor: IrereroColors.sage),
       );
     }
   }
@@ -109,7 +110,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               style: const TextStyle(fontWeight: FontWeight.bold)),
           Container(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFFef295d), Color(0xFFa22891)]),
+              gradient: IrereroColors.primaryGradient,
               borderRadius: BorderRadius.circular(8),
             ),
             child: ElevatedButton.icon(
@@ -139,19 +140,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 width: 85,
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
-                  color: present ? const Color(0xFF00d084).withOpacity(0.1) : const Color(0xFFe21e5a).withOpacity(0.1),
+                  color: present ? IrereroColors.mint.withOpacity(0.65) : IrereroColors.blush.withOpacity(0.75),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: present ? const Color(0xFF00d084).withOpacity(0.3) : const Color(0xFFe21e5a).withOpacity(0.3)),
+                  border: Border.all(
+                      color: present ? IrereroColors.sage.withOpacity(0.45) : IrereroColors.coral.withOpacity(0.35)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(present ? Icons.check_circle_outline : Icons.cancel_outlined, 
-                         color: present ? const Color(0xFF00d084) : const Color(0xFFe21e5a), size: 16),
+                    Icon(present ? Icons.check_circle_outline : Icons.cancel_outlined,
+                         color: present ? IrereroColors.sage : IrereroColors.coral, size: 16),
                     const SizedBox(width: 4),
-                    Text(present ? 'Hano' : 'Ntahari', 
-                         style: TextStyle(color: present ? const Color(0xFF00d084) : const Color(0xFFe21e5a), 
-                                          fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(present ? 'Hano' : 'Ntahari',
+                         style: TextStyle(
+                             color: present ? IrereroColors.forest : IrereroColors.coral,
+                             fontSize: 12,
+                             fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),

@@ -2,6 +2,7 @@
 // Child register — searchable, filterable — FR-015
 import 'package:flutter/material.dart';
 import '../../db/database_helper.dart';
+import '../../theme/irerero_colors.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/child_avatar.dart';
 import 'child_profile_screen.dart';
@@ -55,11 +56,11 @@ class _ChildListScreenState extends State<ChildListScreen> {
     return Scaffold(
       floatingActionButton: Container(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Color(0xFFef295d), Color(0xFFa22891)]),
+          gradient: IrereroColors.primaryGradient,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFef295d).withOpacity(0.3),
+              color: IrereroColors.coral.withOpacity(0.22),
               blurRadius: 8,
               offset: const Offset(0, 4),
             )
@@ -84,7 +85,7 @@ class _ChildListScreenState extends State<ChildListScreen> {
           child: SearchBar(
             hintText: 'Shakisha umwana...',
             leading: Icon(Icons.search, color: Theme.of(context).colorScheme.primary),
-            backgroundColor: WidgetStateProperty.all(Colors.white),
+            backgroundColor: WidgetStateProperty.all(IrereroColors.surfaceCard),
             elevation: WidgetStateProperty.all(1),
             shape: WidgetStateProperty.all(RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

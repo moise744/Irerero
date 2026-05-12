@@ -2,9 +2,9 @@
 //
 // Nutritional status badge — colour + text label + icon.
 // Never colour alone — NFR-016 accessibility requirement.
-// Alert severity uses 'urgent'/'warning'/'information' labels — FR-033.
 
 import 'package:flutter/material.dart';
+import '../theme/irerero_colors.dart';
 
 enum NutritionalStatus {
   normal, atRisk, mam, sam, stunted, severelystunted, underweight, unknown,
@@ -25,14 +25,14 @@ class StatusBadge extends StatelessWidget {
         decoration: BoxDecoration(
           color: config.bgColour,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: config.textColour.withOpacity(0.4)),
+          border: Border.all(color: config.textColour.withOpacity(0.35)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(config.icon, color: config.textColour, size: 14),
           const SizedBox(width: 4),
           Text(config.shortLabel,
-              style: TextStyle(color: config.textColour,
-                  fontSize: 12, fontWeight: FontWeight.bold)),
+              style: TextStyle(
+                  color: config.textColour, fontSize: 12, fontWeight: FontWeight.bold)),
         ]),
       );
     }
@@ -47,10 +47,11 @@ class StatusBadge extends StatelessWidget {
         const SizedBox(width: 8),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(config.label,
-              style: TextStyle(color: config.textColour,
-                  fontWeight: FontWeight.bold, fontSize: 14)),
-          if (!compact) Text(config.sublabel,
-              style: TextStyle(color: config.textColour.withOpacity(0.8), fontSize: 11)),
+              style: TextStyle(
+                  color: config.textColour, fontWeight: FontWeight.bold, fontSize: 14)),
+          if (!compact)
+            Text(config.sublabel,
+                style: TextStyle(color: config.textColour.withOpacity(0.85), fontSize: 11)),
         ]),
       ]),
     );
@@ -60,51 +61,65 @@ class StatusBadge extends StatelessWidget {
     switch (s) {
       case 'sam':
         return _StatusConfig(
-          bgColour: const Color(0xFFe21e5a).withOpacity(0.1), textColour: const Color(0xFFe21e5a),
+          bgColour: IrereroColors.blush.withOpacity(0.95),
+          textColour: IrereroColors.coral,
           icon: Icons.warning_rounded,
-          label: 'Severe Malnutrition', shortLabel: 'SAM',
+          label: 'Severe Malnutrition',
+          shortLabel: 'SAM',
           sublabel: 'Needs urgent medical care',
         );
       case 'mam':
         return _StatusConfig(
-          bgColour: Colors.orange.withOpacity(0.1), textColour: Colors.deepOrange,
+          bgColour: IrereroColors.cream.withOpacity(0.95),
+          textColour: IrereroColors.forest,
           icon: Icons.warning_amber_rounded,
-          label: 'Moderate Malnutrition', shortLabel: 'MAM',
+          label: 'Moderate Malnutrition',
+          shortLabel: 'MAM',
           sublabel: 'Needs feeding support',
         );
       case 'severely_stunted':
         return _StatusConfig(
-          bgColour: const Color(0xFFe21e5a).withOpacity(0.1), textColour: const Color(0xFFe21e5a),
+          bgColour: IrereroColors.blush.withOpacity(0.95),
+          textColour: IrereroColors.coral,
           icon: Icons.height,
-          label: 'Severely Stunted', shortLabel: 'Sev. Stunted',
+          label: 'Severely Stunted',
+          shortLabel: 'Sev. Stunted',
           sublabel: 'Refer to health centre',
         );
       case 'stunted':
         return _StatusConfig(
-          bgColour: Colors.orange.withOpacity(0.1), textColour: Colors.deepOrange,
+          bgColour: IrereroColors.cream.withOpacity(0.95),
+          textColour: IrereroColors.forest,
           icon: Icons.height,
-          label: 'Stunted', shortLabel: 'Stunted',
+          label: 'Stunted',
+          shortLabel: 'Stunted',
           sublabel: 'Check nutrition and feeding',
         );
       case 'underweight':
         return _StatusConfig(
-          bgColour: Colors.orange.withOpacity(0.1), textColour: Colors.deepOrange,
+          bgColour: IrereroColors.cream.withOpacity(0.95),
+          textColour: IrereroColors.forest,
           icon: Icons.scale,
-          label: 'Underweight', shortLabel: 'Underweight',
+          label: 'Underweight',
+          shortLabel: 'Underweight',
           sublabel: 'Review diet and feeding',
         );
       case 'at_risk':
         return _StatusConfig(
-          bgColour: Colors.orange.withOpacity(0.1), textColour: Colors.deepOrange,
+          bgColour: IrereroColors.cream.withOpacity(0.95),
+          textColour: IrereroColors.amber,
           icon: Icons.info_outline,
-          label: 'Watch Closely', shortLabel: 'At Risk',
+          label: 'Watch Closely',
+          shortLabel: 'At Risk',
           sublabel: 'Slightly below healthy range',
         );
       default:
         return _StatusConfig(
-          bgColour: const Color(0xFF00d084).withOpacity(0.1), textColour: const Color(0xFF00d084),
+          bgColour: IrereroColors.mint.withOpacity(0.85),
+          textColour: IrereroColors.forest,
           icon: Icons.check_circle_outline,
-          label: 'Healthy', shortLabel: 'Normal',
+          label: 'Healthy',
+          shortLabel: 'Normal',
           sublabel: 'Growing well',
         );
     }
@@ -116,7 +131,11 @@ class _StatusConfig {
   final IconData icon;
   final String label, shortLabel, sublabel;
   const _StatusConfig({
-    required this.bgColour, required this.textColour, required this.icon,
-    required this.label, required this.shortLabel, required this.sublabel,
+    required this.bgColour,
+    required this.textColour,
+    required this.icon,
+    required this.label,
+    required this.shortLabel,
+    required this.sublabel,
   });
 }

@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../db/database_helper.dart';
 import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
+import '../../theme/irerero_colors.dart';
 
 class RegisterChildScreen extends StatefulWidget {
   const RegisterChildScreen({super.key});
@@ -65,13 +66,13 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_dob == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hitamo itariki y’amavuko (DOB).'), backgroundColor: Colors.orange),
+        const SnackBar(content: Text('Hitamo itariki y’amavuko (DOB).'), backgroundColor: IrereroColors.amber),
       );
       return;
     }
     if (!_consentGiven) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ugomba kwemeza uburenganzira bw\'umubyeyi.'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Ugomba kwemeza uburenganzira bw\'umubyeyi.'), backgroundColor: IrereroColors.coral),
       );
       return;
     }
@@ -81,7 +82,7 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
 
     if (!auth.isLoggedIn || auth.centreId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ntushobora kwandika umwana utinjiye (login) neza.'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Ntushobora kwandika umwana utinjiye (login) neza.'), backgroundColor: IrereroColors.coral),
       );
       return;
     }
@@ -171,7 +172,7 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.privacy_tip, size: 64, color: Color(0xFF3E35A5)),
+              const Icon(Icons.privacy_tip, size: 64, color: IrereroColors.forest),
               const SizedBox(height: 24),
               const Text('Kwemeza Uburenganzira bw\'Umubyeyi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
               const SizedBox(height: 16),
@@ -212,9 +213,9 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
                 onTap: _takePhoto,
                 child: CircleAvatar(
                   radius: 50,
-                  backgroundColor: Colors.grey.shade200,
+                  backgroundColor: IrereroColors.mint.withOpacity(0.5),
                   backgroundImage: _photo != null ? FileImage(File(_photo!.path)) : null,
-                  child: _photo == null ? const Icon(Icons.camera_alt, size: 40, color: Colors.grey) : null,
+                  child: _photo == null ? const Icon(Icons.camera_alt, size: 40, color: IrereroColors.inkMuted) : null,
                 ),
               ),
             ),

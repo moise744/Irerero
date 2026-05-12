@@ -1,12 +1,12 @@
 // lib/widgets/sync_indicator.dart
 //
 // Connectivity and sync status indicator shown on ALL screens — FR-086.
-// Green tick = synced, orange clock = pending, red exclamation = error.
 // Colour + icon (never colour alone) — NFR-016.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../sync/sync_service.dart';
+import '../theme/irerero_colors.dart';
 
 class SyncIndicator extends StatelessWidget {
   const SyncIndicator({super.key});
@@ -15,30 +15,30 @@ class SyncIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SyncService>(builder: (context, sync, _) {
       IconData icon;
-      Color    colour;
-      String   tooltip;
+      Color colour;
+      String tooltip;
 
       switch (sync.status) {
         case SyncStatus.synced:
-          icon    = Icons.cloud_done;
-          colour  = const Color(0xFF00d084);
+          icon = Icons.cloud_done;
+          colour = IrereroColors.sage;
           tooltip = 'All data synced';
         case SyncStatus.syncing:
-          icon    = Icons.cloud_sync;
-          colour  = const Color(0xFF3E35A5);
+          icon = Icons.cloud_sync;
+          colour = IrereroColors.forest;
           tooltip = 'Syncing…';
         case SyncStatus.error:
-          icon    = Icons.cloud_off;
-          colour  = const Color(0xFFe21e5a);
+          icon = Icons.cloud_off;
+          colour = IrereroColors.coral;
           tooltip = 'Sync error — will retry';
         case SyncStatus.idle:
           if (sync.pendingCount > 0) {
-            icon    = Icons.cloud_upload;
-            colour  = Colors.orange;
+            icon = Icons.cloud_upload;
+            colour = IrereroColors.amber;
             tooltip = '${sync.pendingCount} record(s) pending upload';
           } else {
-            icon    = Icons.cloud_done;
-            colour  = const Color(0xFF00d084);
+            icon = Icons.cloud_done;
+            colour = IrereroColors.sage;
             tooltip = 'All data synced';
           }
       }

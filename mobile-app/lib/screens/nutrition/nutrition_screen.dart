@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../db/database_helper.dart';
 import 'package:uuid/uuid.dart';
 import '../../widgets/child_avatar.dart';
+import '../../theme/irerero_colors.dart';
 
 class NutritionScreen extends StatefulWidget {
   final String? childUuid;
@@ -108,7 +109,7 @@ class _NutritionScreenState extends State<NutritionScreen>
                 onTap: () { Navigator.pop(ctx); _showEnrolmentDialog(context); },
               ),
               ListTile(
-                leading: const Icon(Icons.warning_amber, color: Colors.orange),
+                leading: const Icon(Icons.warning_amber, color: IrereroColors.amber),
                 title: const Text('Flag Poor Food Intake'),
                 onTap: () { Navigator.pop(ctx); _showPoorIntakeDialog(context); },
               ),
@@ -129,7 +130,7 @@ class _NutritionScreenState extends State<NutritionScreen>
         itemBuilder: (ctx, i) {
           final e = _enrolments[i];
           final type = e['programme_type'] ?? 'sfp';
-          final colour = type == 'tfp' ? Colors.red : Colors.orange;
+          final colour = type == 'tfp' ? IrereroColors.coral : IrereroColors.amber;
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
@@ -156,7 +157,7 @@ class _NutritionScreenState extends State<NutritionScreen>
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
-              leading: const Icon(Icons.restaurant_menu, color: Colors.teal),
+              leading: const Icon(Icons.restaurant_menu, color: IrereroColors.forest),
               title: Text(m['date'] ?? ''),
               subtitle: Text(m['menu_description'] ?? 'No description'),
               trailing: Chip(label: Text('${m['children_fed_count'] ?? 0} fed')),
@@ -179,10 +180,10 @@ class _NutritionScreenState extends State<NutritionScreen>
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
-              leading: const Icon(Icons.warning, color: Colors.orange),
+              leading: const Icon(Icons.warning, color: IrereroColors.amber),
               title: Text(_childNameByUuid[(f['child_uuid'] as String?) ?? ''] ?? 'Child'),
               subtitle: Text('Notes: ${f['notes'] ?? 'None'}'),
-              trailing: const Text('POOR INTAKE', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 10)),
+              trailing: const Text('POOR INTAKE', style: TextStyle(color: IrereroColors.amber, fontWeight: FontWeight.bold, fontSize: 10)),
             ),
           );
         },

@@ -13,6 +13,7 @@ import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/child_avatar.dart';
+import '../../theme/irerero_colors.dart';
 
 class ReferralScreen extends StatefulWidget {
   final String? childUuid;
@@ -367,7 +368,7 @@ class _ReferralCard extends StatelessWidget {
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open PDF. Please ensure backend is running.'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Could not open PDF. Please ensure backend is running.'), backgroundColor: IrereroColors.coral),
         );
       }
     }
@@ -377,12 +378,12 @@ class _ReferralCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = referral['status'] ?? 'pending';
     final statusColor = {
-          'pending': Colors.orange,
-          'attended': Colors.blue,
-          'treatment_given': Colors.green,
-          'closed': Colors.grey,
+          'pending': IrereroColors.amber,
+          'attended': IrereroColors.forest,
+          'treatment_given': IrereroColors.sage,
+          'closed': IrereroColors.inkMuted,
         }[status] ??
-        Colors.grey;
+        IrereroColors.inkMuted;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -420,11 +421,11 @@ class _ReferralCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(referral['reason'] ?? '',
-                style: const TextStyle(color: Colors.black87)),
+                style: const TextStyle(color: IrereroColors.ink)),
             const SizedBox(height: 4),
             Text(
               'Date: ${referral['referral_date'] ?? ''}',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 12, color: IrereroColors.inkMuted),
             ),
             if (referral['diagnosis'] != null && referral['diagnosis'].toString().isNotEmpty) ...[
               const Divider(),
@@ -442,8 +443,8 @@ class _ReferralCard extends StatelessWidget {
               alignment: WrapAlignment.end,
               children: [
                 OutlinedButton.icon(
-                  icon: const Icon(Icons.picture_as_pdf, size: 18, color: Colors.red),
-                  label: const Text('Download PDF', style: TextStyle(color: Colors.red)),
+                  icon: const Icon(Icons.picture_as_pdf, size: 18, color: IrereroColors.forest),
+                  label: const Text('Download PDF', style: TextStyle(color: IrereroColors.forest)),
                   onPressed: () => _downloadPdf(context),
                 ),
                 if (onRecordOutcome != null)

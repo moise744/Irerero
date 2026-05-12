@@ -3,6 +3,7 @@
 // No Z-scores in display — AI-FR-017
 import 'package:flutter/material.dart';
 import '../../db/database_helper.dart';
+import '../../theme/irerero_colors.dart';
 import '../../widgets/empty_state.dart';
 
 class AlertsScreen extends StatefulWidget {
@@ -27,8 +28,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
     setState(() { _alerts = rows; _loading = false; });
   }
 
-  Color _severityColour(String s) =>
-      s == 'urgent' ? const Color(0xFFe21e5a) : s == 'warning' ? Colors.orange : const Color(0xFF3E35A5);
+  Color _severityColour(String s) => s == 'urgent'
+      ? IrereroColors.coral
+      : s == 'warning'
+          ? IrereroColors.amber
+          : IrereroColors.forest;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +74,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   SizedBox(width: double.infinity,
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [Color(0xFFef295d), Color(0xFFa22891)]),
+                        gradient: IrereroColors.primaryGradient,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: ElevatedButton.icon(

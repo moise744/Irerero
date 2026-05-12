@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../db/database_helper.dart';
+import '../../theme/irerero_colors.dart';
 import '../auth/login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -30,7 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 20),
           const CircleAvatar(
             radius: 50,
-            backgroundColor: Colors.teal,
+            backgroundColor: IrereroColors.forest,
             child: Icon(Icons.person, size: 50, color: Colors.white),
           ),
           const SizedBox(height: 16),
@@ -42,13 +43,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             auth.role?.toUpperCase() ?? 'CAREGIVER',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.grey, fontSize: 16),
+            style: const TextStyle(color: IrereroColors.inkMuted, fontSize: 16),
           ),
           const SizedBox(height: 40),
           
           Card(
             child: ListTile(
-              leading: const Icon(Icons.business, color: Colors.teal),
+              leading: const Icon(Icons.business, color: IrereroColors.forest),
               title: const Text('Ikigo (Centre Code)'),
               subtitle: Text(auth.centreId ?? 'Nta kigo gihari'),
             ),
@@ -56,7 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 12),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.info_outline, color: Colors.blue),
+              leading: const Icon(Icons.info_outline, color: IrereroColors.forest),
               title: const Text('Irerero App Version'),
               subtitle: const Text('v1.0.0 (Offline-First Edition)'),
             ),
@@ -65,7 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // GAP-010: Offline Data Purge UI
           Card(
             child: ListTile(
-              leading: const Icon(Icons.delete_forever, color: Colors.red),
+              leading: const Icon(Icons.delete_forever, color: IrereroColors.coral),
               title: const Text('Siba amakuru yose (Reset Database)'),
               subtitle: const Text('Siba amakuru yose ari kuri telefoni'),
               onTap: () async {
@@ -80,7 +81,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: const Text('Oya (Cancel)'),
                       ),
                       FilledButton(
-                        style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                        style: FilledButton.styleFrom(backgroundColor: IrereroColors.coral),
                         onPressed: () => Navigator.pop(ctx, true),
                         child: const Text('Yego (Erase)'),
                       ),
@@ -108,7 +109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.red.shade700,
+              backgroundColor: IrereroColors.forestDeep,
               padding: const EdgeInsets.all(16),
             ),
             onPressed: () async {
@@ -124,7 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: const Text('Oya (Cancel)'),
                     ),
                     FilledButton(
-                      style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                      style: FilledButton.styleFrom(backgroundColor: IrereroColors.coral),
                       onPressed: () => Navigator.pop(ctx, true),
                       child: const Text('Yego (Logout)'),
                     ),

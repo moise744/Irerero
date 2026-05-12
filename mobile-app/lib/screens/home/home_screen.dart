@@ -26,6 +26,7 @@ import '../measurements/batch_measurement_screen.dart';
 import '../settings/settings_screen.dart';
 import '../nutrition/meal_recording_screen.dart';
 import '../../widgets/child_avatar.dart';
+import '../../theme/irerero_colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -178,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Nta bana bari muri sisitemu. Banza wandike umwana.'),
-          backgroundColor: const Color(0xFFF5A462),
+          backgroundColor: IrereroColors.amber,
         ),
       );
       return;
@@ -197,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(fontWeight: FontWeight.bold)),
             ),
             ListTile(
-              leading: const Icon(Icons.list_alt, color: Color(0xFF2D6B4F)),
+              leading: const Icon(Icons.list_alt, color: IrereroColors.forest),
               title: const Text('Batch Mode (Pima Abana Bose)'),
               subtitle: const Text('Igipimo cya bose binyuranye'),
               onTap: () => Navigator.pop(ctx, {'batch_mode': true}),
@@ -278,9 +279,9 @@ class _DashboardTab extends StatelessWidget {
               Text('Ibarura ry\'Uyu Munsi', style: TextStyle(fontWeight: FontWeight.bold, color: cs.primary)),
               const SizedBox(height: 12),
               Row(children: [
-                _StatChip(icon: Icons.check_circle, colour: const Color(0xFF3DAF8A), label: 'Bari hano', value: presentToday),
+                _StatChip(icon: Icons.check_circle, colour: IrereroColors.sage, label: 'Bari hano', value: presentToday),
                 const SizedBox(width: 12),
-                _StatChip(icon: Icons.cancel, colour: const Color(0xFFE8573A), label: 'Batahari', value: absentToday),
+                _StatChip(icon: Icons.cancel, colour: IrereroColors.coral, label: 'Batahari', value: absentToday),
               ]),
             ]),
           )),
@@ -381,7 +382,7 @@ class _AlertCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final severity = alert['severity'] as String? ?? 'warning';
     final colour =
-        severity == 'urgent' ? const Color(0xFFE8573A) : (severity == 'warning' ? const Color(0xFFF5A462) : const Color(0xFF2D6B4F));
+        severity == 'urgent' ? IrereroColors.coral : (severity == 'warning' ? IrereroColors.amber : IrereroColors.forest);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -409,7 +410,7 @@ class _OverdueCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 6),
       child: ListTile(
-        leading: Icon(Icons.schedule, color: reason == 'overdue' ? const Color(0xFFE8573A) : const Color(0xFFF5A462)),
+        leading: Icon(Icons.schedule, color: reason == 'overdue' ? IrereroColors.coral : IrereroColors.amber),
         title: Text(child['full_name'] as String? ?? ''),
         subtitle: Text('$days days since last measurement'),
         trailing: StatusBadge(status: reason == 'overdue' ? 'at_risk' : 'normal', compact: true),

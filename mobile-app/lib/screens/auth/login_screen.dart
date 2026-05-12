@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
+import '../../theme/irerero_colors.dart';
 import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -148,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderSide: BorderSide(color: cs.primary, width: 2),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: IrereroColors.surfaceCard,
                       ),
                       validator: (v) => v == null || v.isEmpty
                           ? (_selectedLang == 'rw' ? 'Uzuza iri gace.' : 'This field is required.')
@@ -176,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderSide: BorderSide(color: cs.primary, width: 2),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: IrereroColors.surfaceCard,
                         suffixIcon: IconButton(
                           icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
                           onPressed: () => setState(() => _obscure = !_obscure),
@@ -193,15 +194,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       height: 52,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFef295d), Color(0xFFa22891)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        gradient: IrereroColors.primaryGradient,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFef295d).withOpacity(0.3),
+                            color: IrereroColors.coral.withOpacity(0.22),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           )

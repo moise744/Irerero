@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../sync/sync_service.dart';
 import '../../services/auth_service.dart';
 import '../../db/database_helper.dart';
+import '../../theme/irerero_colors.dart';
 
 class SyncStatusScreen extends StatefulWidget {
   const SyncStatusScreen({super.key});
@@ -39,7 +40,7 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
     _loadQueue();
     if (mounted) {
       context.read<SyncService>().syncIfConnected(); // forces refresh of pending count
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pending queue cleared. Local data preserved.'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pending queue cleared. Local data preserved.'), backgroundColor: IrereroColors.amber));
     }
   }
 
@@ -54,7 +55,7 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
               children: [
                 ListTile(
                   leading: Icon(Icons.cloud_done,
-                      color: sync.status == SyncStatus.synced ? Colors.green : Colors.orange),
+                      color: sync.status == SyncStatus.synced ? IrereroColors.sage : IrereroColors.amber),
                   title: const Text('Aho Bihagaze'),
                   subtitle: Text(sync.status.name.toUpperCase()),
                 ),
@@ -92,19 +93,19 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
           const Divider(),
           const Padding(
             padding: EdgeInsets.all(8.0),
-            child: Text('Pending Queue & Conflicts (For Managers)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            child: Text('Pending Queue & Conflicts (For Managers)', style: TextStyle(fontWeight: FontWeight.bold, color: IrereroColors.inkMuted)),
           ),
           
           Expanded(
             child: _loading ? const Center(child: CircularProgressIndicator()) 
             : _pendingRecords.isEmpty 
-              ? const Center(child: Text('No pending records.', style: TextStyle(color: Colors.grey)))
+              ? const Center(child: Text('No pending records.', style: TextStyle(color: IrereroColors.inkMuted)))
               : ListView.builder(
                   itemCount: _pendingRecords.length,
                   itemBuilder: (ctx, i) {
                     final r = _pendingRecords[i];
                     return ListTile(
-                      leading: const Icon(Icons.queue_play_next, color: Colors.orange),
+                      leading: const Icon(Icons.queue_play_next, color: IrereroColors.amber),
                       title: Text('${r['entity_type']} (${r['operation']})'),
                       subtitle: Text('ID: ${r['entity_uuid']}\nQueued: ${r['created_at']}'),
                       isThreeLine: true,
@@ -117,15 +118,15 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.delete_sweep, color: Colors.red),
-                label: const Text('Force Clear Queue (Resolve Conflict)', style: TextStyle(color: Colors.red)),
+                icon: const Icon(Icons.delete_sweep, color: IrereroColors.coral),
+                label: const Text('Force Clear Queue (Resolve Conflict)', style: TextStyle(color: IrereroColors.coral)),
                 onPressed: () {
                   showDialog(context: context, builder: (ctx) => AlertDialog(
                     title: const Text('Clear Queue?'),
                     content: const Text('If records are stuck due to server conflict, you can clear the queue. Local data remains safe on your device.'),
                     actions: [
                       TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-                      FilledButton(onPressed: () { Navigator.pop(ctx); _clearQueue(); }, style: FilledButton.styleFrom(backgroundColor: Colors.red), child: const Text('Clear Queue')),
+                      FilledButton(onPressed: () { Navigator.pop(ctx); _clearQueue(); }, style: FilledButton.styleFrom(backgroundColor: IrereroColors.coral), child: const Text('Clear Queue')),
                     ],
                   ));
                 },

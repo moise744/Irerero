@@ -3,7 +3,7 @@
 // Measurement entry form — manual + embedded device mode.
 // BIV validation with warning — FR-025, ES-FR-007.
 // Z-score computed offline — AI-FR-004.
-// Embedded values highlighted blue — ES-FR-004.
+// Embedded values highlighted (device-sourced fields) — ES-FR-004.
 // Human confirmation required before save — SRS §6.1 design principle.
 // Temperature alerts shown immediately — PUD §3.4.
 // Trend arrow shown after save — PUD §6.2.
@@ -18,6 +18,7 @@ import '../../device/device_interface.dart';
 import '../../device/http_adapter.dart';
 import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
+import '../../theme/irerero_colors.dart';
 import '../../widgets/status_badge.dart';
 
 class MeasurementScreen extends StatefulWidget {
@@ -90,7 +91,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
           content: Text(
             'Device reading ignored: child_id "$incoming" does not match this child (${expectedIrereroId.isNotEmpty ? expectedIrereroId : expectedUuid}).',
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: IrereroColors.amber,
           duration: const Duration(seconds: 4),
         ),
       );
@@ -107,7 +108,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
     });
     _computePreview();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✓ Values received from device — please confirm'), backgroundColor: Colors.blue, duration: Duration(seconds: 3)),
+      const SnackBar(content: Text('✓ Values received from device — please confirm'), backgroundColor: IrereroColors.forest, duration: Duration(seconds: 3)),
     );
   }
 
@@ -218,13 +219,13 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
     final status = _result?.nutritionalStatus ?? 'normal';
     showDialog(context: context, barrierDismissible: false, builder: (ctx) => AlertDialog(
       title: Row(children: [
-        const Icon(Icons.check_circle, color: Colors.green),
+        const Icon(Icons.check_circle, color: IrereroColors.sage),
         const SizedBox(width: 8),
         const Text('Measurement Saved'),
         if (_trendArrow != null) ...[
           const SizedBox(width: 8),
           Text(_trendArrow!, style: TextStyle(
-            color: _trendArrow == '↑' ? Colors.green : _trendArrow == '↓' ? Colors.red : Colors.orange,
+            color: _trendArrow == '↑' ? IrereroColors.sage : _trendArrow == '↓' ? IrereroColors.coral : IrereroColors.amber,
             fontSize: 20, fontWeight: FontWeight.bold,
           )),
         ],
@@ -234,8 +235,8 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
         if (_tempAlertMsg != null) ...[
           const SizedBox(height: 12),
           Container(padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(8)),
-            child: Text(_tempAlertMsg!, style: const TextStyle(color: Colors.deepOrange))),
+            decoration: BoxDecoration(color: IrereroColors.cream, borderRadius: BorderRadius.circular(8)),
+            child: Text(_tempAlertMsg!, style: const TextStyle(color: IrereroColors.coral))),
         ],
       ]),
       actions: [
@@ -252,10 +253,10 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
   }
 
   Color _fieldColor(String key) =>
-      _fromDevice.contains(key) ? Colors.blue.shade50 : Colors.transparent;
+      _fromDevice.contains(key) ? IrereroColors.flex : Colors.transparent;
 
   OutlineInputBorder _fieldBorder(String key) => OutlineInputBorder(
-    borderSide: BorderSide(color: _fromDevice.contains(key) ? Colors.blue : Colors.grey.shade400),
+    borderSide: BorderSide(color: _fromDevice.contains(key) ? IrereroColors.forest : IrereroColors.borderWarm),
   );
 
   @override
@@ -267,7 +268,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
 
           Row(children: [
             Icon(_deviceConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
-                color: _deviceConnected ? Colors.blue : Colors.grey),
+                color: _deviceConnected ? IrereroColors.forest : IrereroColors.inkMuted),
             const SizedBox(width: 8),
             Expanded(
               child: Text(_deviceConnected
@@ -280,13 +281,13 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
 
           if (_fromDevice.isNotEmpty)
             Container(padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.blue.shade50,
-                  border: Border.all(color: Colors.blue), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: IrereroColors.flex,
+                  border: Border.all(color: IrereroColors.forest), borderRadius: BorderRadius.circular(8)),
               child: const Row(children: [
-                Icon(Icons.bluetooth, color: Colors.blue, size: 16),
+                Icon(Icons.bluetooth, color: IrereroColors.forest, size: 16),
                 SizedBox(width: 8),
                 Expanded(
-                  child: Text('Blue fields were received from device', style: TextStyle(color: Colors.blue, fontSize: 12)),
+                  child: Text('Highlighted fields were received from the device', style: TextStyle(color: IrereroColors.forest, fontSize: 12)),
                 ),
               ])),
           const SizedBox(height: 16),
@@ -334,12 +335,12 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
             StatusBadge(status: _result!.nutritionalStatus),
             const SizedBox(height: 8),
             if (_bivWarn) Container(padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: IrereroColors.cream, borderRadius: BorderRadius.circular(8)),
               child: const Text('⚠ One value appears unusual. Please recheck before saving.',
-                  style: TextStyle(color: Colors.deepOrange))),
+                  style: TextStyle(color: IrereroColors.coral))),
             if (_tempAlertMsg != null) Container(padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
-              child: Text(_tempAlertMsg!, style: TextStyle(color: Colors.red.shade800))),
+              decoration: BoxDecoration(color: IrereroColors.blush, borderRadius: BorderRadius.circular(8)),
+              child: Text(_tempAlertMsg!, style: const TextStyle(color: IrereroColors.forestDeep))),
             const SizedBox(height: 8),
           ],
 

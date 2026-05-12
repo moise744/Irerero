@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/irerero_colors.dart';
 import 'measurement_screen.dart';
 
 class BatchMeasurementScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class _BatchMeasurementScreenState extends State<BatchMeasurementScreen> {
     } else {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Batch measurement yarangiye.'), backgroundColor: Colors.blue),
+        const SnackBar(content: Text('Batch measurement yarangiye.'), backgroundColor: IrereroColors.forest),
       );
     }
   }
@@ -40,7 +41,7 @@ class _BatchMeasurementScreenState extends State<BatchMeasurementScreen> {
         actions: [
           TextButton(
             onPressed: _next,
-            child: const Text('Simbutuka', style: TextStyle(color: Colors.white)),
+            child: Text('Simbutuka', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
           ),
         ],
       ),

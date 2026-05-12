@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../theme/irerero_colors.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -42,7 +43,7 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
       showWhen: true,
-      color: const Color(0xFFD32F2F), // Red for urgent alerts
+      color: IrereroColors.coral,
     );
 
     const NotificationDetails platformChannelSpecifics =

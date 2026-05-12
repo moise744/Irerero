@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../db/database_helper.dart';
 import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
+import '../../theme/irerero_colors.dart';
 
 class MealRecordingScreen extends StatefulWidget {
   const MealRecordingScreen({super.key});
@@ -41,7 +42,7 @@ class _MealRecordingScreenState extends State<MealRecordingScreen> {
   Future<void> _saveMeal() async {
     if (_mealTypeCtrl.text.trim().isEmpty || _ingredientsCtrl.text.trim().isEmpty || _childrenFed <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Uzuza imyirondoro yose neza.'), backgroundColor: Colors.orange),
+        const SnackBar(content: Text('Uzuza imyirondoro yose neza.'), backgroundColor: IrereroColors.amber),
       );
       return;
     }
@@ -83,7 +84,7 @@ class _MealRecordingScreenState extends State<MealRecordingScreen> {
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ifunguro ryabitswe!'), backgroundColor: Color(0xFF00d084)),
+        const SnackBar(content: Text('Ifunguro ryabitswe!'), backgroundColor: IrereroColors.sage),
       );
     }
     await _loadMeals();
@@ -155,7 +156,7 @@ class _MealRecordingScreenState extends State<MealRecordingScreen> {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
-                            leading: const Icon(Icons.restaurant, color: Color(0xFF00d084)),
+                            leading: const Icon(Icons.restaurant, color: IrereroColors.sage),
                             title: Text(m['meal_type'] ?? ''),
                             subtitle: Text('Ibigize: ${m['ingredients']}\nAbana: ${m['children_fed_count']}'),
                             trailing: Text(m['date'] ?? '', style: const TextStyle(fontSize: 12)),

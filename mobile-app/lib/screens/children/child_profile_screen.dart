@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../db/database_helper.dart';
 import '../../services/auth_service.dart';
 import '../../sync/sync_service.dart';
+import '../../theme/irerero_colors.dart';
 import '../../widgets/status_badge.dart';
 import '../measurements/measurement_screen.dart';
 import '../referrals/referral_screen.dart';
@@ -76,7 +77,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> with SingleTick
           if (_trendArrow != null) Padding(
             padding: const EdgeInsets.all(8),
             child: Chip(label: Text(_trendArrow!, style: TextStyle(
-              color: _trendArrow == '↑' ? const Color(0xFF00d084) : _trendArrow == '↓' ? const Color(0xFFe21e5a) : Colors.orange,
+              color: _trendArrow == '↑' ? IrereroColors.sage : _trendArrow == '↓' ? IrereroColors.coral : IrereroColors.amber,
               fontSize: 18, fontWeight: FontWeight.bold))),
           ),
           IconButton(icon: const Icon(Icons.edit), tooltip: 'Edit Profile',
@@ -234,9 +235,9 @@ class _WhoGrowthChartState extends State<_WhoGrowthChart> {
                             leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, interval: _showWeight ? 2 : 5, getTitlesWidget: (v, meta) => Text(v.toStringAsFixed(0), style: const TextStyle(fontSize: 10)))),
                           ),
                           lineBarsData: [
-                            _curveLine(curves.p3, Colors.grey.shade400), _curveLine(curves.p15, Colors.grey.shade500),
-                            _curveLine(curves.p50, Colors.grey.shade700), _curveLine(curves.p85, Colors.grey.shade500),
-                            _curveLine(curves.p97, Colors.grey.shade400),
+                            _curveLine(curves.p3, IrereroColors.borderSubtle), _curveLine(curves.p15, IrereroColors.borderWarm),
+                            _curveLine(curves.p50, IrereroColors.inkMuted), _curveLine(curves.p85, IrereroColors.borderWarm),
+                            _curveLine(curves.p97, IrereroColors.borderSubtle),
                             LineChartBarData(spots: points, isCurved: false, color: cs.primary, barWidth: 3, dotData: const FlDotData(show: true)),
                           ],
                         ),
@@ -281,7 +282,7 @@ class _CurveBundle {
 class _MeasRow extends StatelessWidget {
   final String label, value;
   const _MeasRow(this.label, this.value);
-  @override Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: const TextStyle(color: Colors.grey)), Text(value, style: const TextStyle(fontWeight: FontWeight.bold))]));
+  @override Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: const TextStyle(color: IrereroColors.inkMuted)), Text(value, style: const TextStyle(fontWeight: FontWeight.bold))]));
 }
 
 // ── Tab 2: Attendance ──────────────────────────────────────────────────────
@@ -302,7 +303,7 @@ class _AttendanceTabState extends State<_AttendanceTab> {
       : ListView.builder(itemCount: _records.length, itemBuilder: (_, i) {
           final r = _records[i];
           return ListTile(
-            leading: Icon(r['status'] == 'present' ? Icons.check_circle : Icons.cancel, color: r['status'] == 'present' ? const Color(0xFF00d084) : const Color(0xFFe21e5a)),
+            leading: Icon(r['status'] == 'present' ? Icons.check_circle : Icons.cancel, color: r['status'] == 'present' ? IrereroColors.sage : IrereroColors.coral),
             title: Text(r['date'] as String? ?? ''),
             subtitle: r['absence_reason'] != null && (r['absence_reason'] as String).isNotEmpty ? Text(r['absence_reason'] as String) : null,
           );
@@ -317,7 +318,7 @@ class _NutritionTab extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Icon(Icons.restaurant, size: 48, color: Color(0xFF00d084)),
+        const Icon(Icons.restaurant, size: 48, color: IrereroColors.sage),
         const SizedBox(height: 12),
         FilledButton.icon(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => NutritionScreen(childUuid: child['uuid']))),
@@ -327,21 +328,21 @@ class _NutritionTab extends StatelessWidget {
         // P17: Flag poor food intake button
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFFe21e5a),
-            side: const BorderSide(color: Color(0xFFe21e5a)),
+            foregroundColor: IrereroColors.coral,
+            side: const BorderSide(color: IrereroColors.coral),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
           onPressed: () async {
             final confirm = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
-                icon: const Icon(Icons.no_food, color: Color(0xFFe21e5a), size: 40),
+                icon: const Icon(Icons.no_food, color: IrereroColors.coral, size: 40),
                 title: const Text('Andika ibiryo bibi'),
                 content: const Text('Urashaka gushyira ikimenyetso ko uyu mwana adashobora kurya neza?'),
                 actions: [
                   TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Oya')),
                   FilledButton(
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFFe21e5a)),
+                    style: FilledButton.styleFrom(backgroundColor: IrereroColors.coral),
                     onPressed: () => Navigator.pop(ctx, true),
                     child: const Text('Yego'),
                   ),
@@ -365,7 +366,7 @@ class _NutritionTab extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Ikimenyetso cy\'ibiryo bibi cyashyizweho.'),
-                    backgroundColor: Color(0xFFe21e5a),
+                    backgroundColor: IrereroColors.coral,
                   ),
                 );
               }
@@ -411,8 +412,8 @@ class _AlertsTabState extends State<_AlertsTab> {
       builder: (ctx, snap) {
         if (!snap.hasData) return const Center(child: CircularProgressIndicator());
         final rows = snap.data!;
-        if (rows.isEmpty) return const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.check_circle_outline, size: 48, color: Color(0xFF00d084)), SizedBox(height: 8), Text('Nta burira kuri uyu mwana.')]));
-        Color colour(String s, String status) => status == 'resolved' ? Colors.grey : (s == 'urgent' ? const Color(0xFFe21e5a) : s == 'warning' ? Colors.orange : const Color(0xFF3E35A5));
+        if (rows.isEmpty) return const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.check_circle_outline, size: 48, color: IrereroColors.sage), SizedBox(height: 8), Text('Nta burira kuri uyu mwana.')]));
+        Color colour(String s, String status) => status == 'resolved' ? IrereroColors.inkMuted : (s == 'urgent' ? IrereroColors.coral : s == 'warning' ? IrereroColors.amber : IrereroColors.forest);
         return ListView.builder(
           padding: const EdgeInsets.all(12),
           itemCount: rows.length,
@@ -510,7 +511,7 @@ class _ImmunisationTabState extends State<_ImmunisationTab> {
           itemBuilder: (_, i) {
             final v = rows[i];
             final status = (v['status'] as String?) ?? 'due';
-            final colour = status == 'administered' ? const Color(0xFF00d084) : (status == 'overdue' ? const Color(0xFFe21e5a) : Colors.orange);
+            final colour = status == 'administered' ? IrereroColors.sage : (status == 'overdue' ? IrereroColors.coral : IrereroColors.amber);
             return Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(
               leading: Icon(Icons.vaccines, color: colour),
               title: Text(v['vaccine_name'] as String? ?? ''),
@@ -617,7 +618,7 @@ class _NotesTabState extends State<_NotesTab> {
       FilledButton(onPressed: () async {
         await DatabaseHelper.instance.update('children', {'notes': _ctrl.text}, where: 'uuid = ?', whereArgs: [widget.child['uuid']]);
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notes saved'), backgroundColor: Color(0xFF00d084)));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notes saved'), backgroundColor: IrereroColors.sage));
       }, child: const Text('Save Notes')),
     ]),
   );
