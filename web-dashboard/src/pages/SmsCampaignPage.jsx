@@ -8,7 +8,7 @@ import FlashBanner from '../components/ui/FlashBanner'
 
 export default function SmsCampaignPage() {
   const user = useAuthStore(s => s.user)
-  const isAuthorized = ['district', 'national', 'sys_admin'].includes(user?.role)
+  const isAuthorized = ['sector', 'district', 'national', 'sys_admin'].includes(user?.role)
   const { flash, success, error } = useFlashMessage()
 
   const [target, setTarget] = useState('all_parents')
@@ -26,7 +26,7 @@ export default function SmsCampaignPage() {
   if (!isAuthorized)
     return (
       <div className="p-8 text-center text-ink-muted bg-canvas min-h-[40vh] flex items-center justify-center">
-        Access restricted to district and national officers.
+        Access restricted to sector coordinators and district or national officers.
       </div>
     )
 

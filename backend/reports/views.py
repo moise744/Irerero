@@ -213,13 +213,25 @@ class DistrictNationalDashboardView(APIView):
         age_min    = request.query_params.get('age_min_months')   # integer months
         age_max    = request.query_params.get('age_max_months')   # integer months
         ns_filter  = request.query_params.get('nutritional_status')  # sam | mam | stunted...
+        period     = request.query_params.get('period')           # this_month | last_3_months | this_year
+
+        # Cohort by enrolment date (matches dashboard "time period" control)
+        if period in ('this_month', 'last_3_months', 'this_year'):
+            from datetime import timedelta
+            today = timezone.now().date()
+            if period == 'this_month':
+                enrol_after = today.replace(day=1)
+            elif period == 'last_3_months':
+                enrol_after = today - timedelta(days=92)
+            else:
+                enrol_after = today.replace(month=1, day=1)
+            children_qs = children_qs.filter(enrolment_date__gte=enrol_after)
 
         if sex_filter:
             children_qs = children_qs.filter(sex=sex_filter)
 
         # Age group filter via date_of_birth calculation
         if age_min or age_max:
-            from django.utils import timezone
             from datetime import timedelta
             today = timezone.now().date()
             if age_max:
@@ -261,12 +273,13 @@ class DistrictNationalDashboardView(APIView):
             'total_children': total_children,
             'centres':        centres_data,
             'filters_applied': {
+                'period': period,
                 'sex': sex_filter,
                 'age_min_months': age_min,
                 'age_max_months': age_max,
                 'nutritional_status': ns_filter,
             },
-            'filters_available': ['sex', 'age_min_months', 'age_max_months', 'nutritional_status'],
+            'filters_available': ['period', 'sex', 'age_min_months', 'age_max_months', 'nutritional_status'],
         })
 
 

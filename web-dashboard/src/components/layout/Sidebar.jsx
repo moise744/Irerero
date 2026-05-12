@@ -1,6 +1,7 @@
-// src/components/layout/Sidebar.jsx — left sidebar navigation (SRS §5.1)
+// src/components/layout/Sidebar.jsx — left sidebar navigation (SRS §5.1, Appendix A)
 import { NavLink } from 'react-router-dom'
 import { useAuthStore } from '../../hooks/useAuth'
+import { getSidebarLinks } from '../../config/roleNav'
 
 function NavGlyph({ name }) {
   const c = 'w-[18px] h-[18px] shrink-0'
@@ -52,42 +53,20 @@ function NavGlyph({ name }) {
   }
 }
 
-const baseLinks = [
-  { to: '/', label: 'Dashboard', icon: 'home', end: true },
-  { to: '/children', label: 'Children', icon: 'children', end: false },
-  { to: '/alerts', label: 'Alerts', icon: 'alerts', end: false },
-  { to: '/referrals', label: 'Referrals', icon: 'alerts', end: false },
-  { to: '/sms-inbox', label: 'SMS Inbox', icon: 'sms', end: false },
-  { to: '/reports', label: 'Reports', icon: 'reports', end: false },
-]
-
 export default function Sidebar() {
-  const role = useAuthStore(s => s.user?.role)
-  let links = [...baseLinks]
-
-  if (['centre_mgr', 'sys_admin'].includes(role)) {
-    links.push({ to: '/staff', label: 'Staff', icon: 'users', end: false })
-    links.push({ to: '/sync-conflicts', label: 'Conflicts', icon: 'alerts', end: false })
-    links.push({ to: '/food-stock', label: 'Food Stock', icon: 'reports', end: false })
-  }
-  if (['district', 'national', 'sys_admin'].includes(role)) {
-    links.push({ to: '/sms-campaign', label: 'SMS Blast', icon: 'sms', end: false })
-  }
-  if (['national', 'sys_admin'].includes(role)) {
-    links.push({ to: '/report-builder', label: 'Report Builder', icon: 'reports', end: false })
-  }
-  if (role === 'sys_admin') {
-    links.push({ to: '/users', label: 'Users', icon: 'users', end: false })
-    links.push({ to: '/admin-tools', label: 'System Tools', icon: 'users', end: false })
-  }
+  const user = useAuthStore(s => s.user)
+  const links = getSidebarLinks(user?.role)
 
   return (
     <aside className="w-56 shrink-0 min-h-screen bg-canvas flex flex-col border-r border-border-subtle shadow-nav">
       <div className="p-6 border-b border-border-subtle">
         <p className="font-display text-xl font-extrabold text-ink-display tracking-wide">Irerero</p>
         <p className="text-xs text-ink-muted mt-2 leading-relaxed font-medium">Early childhood programmes</p>
+        {user?.role_display && (
+          <p className="text-[11px] text-forest/90 mt-3 font-semibold tracking-wide uppercase">Role: {user.role_display}</p>
+        )}
       </div>
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="Main">
         {links.map(l => (
           <NavLink
             key={l.to}
@@ -106,6 +85,11 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      {user?.role === 'partner' && (
+        <div className="p-4 border-t border-border-subtle text-[11px] text-ink-muted leading-relaxed">
+          Partner access is limited to programme-level dashboards. Identifiable child records are not available in this role.
+        </div>
+      )}
     </aside>
   )
 }

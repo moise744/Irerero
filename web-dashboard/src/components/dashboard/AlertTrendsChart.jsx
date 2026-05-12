@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import api from '../../services/api'
 import { useAuthStore } from '../../hooks/useAuth'
 
-export default function AlertTrendsChart() {
+export default function AlertTrendsChart({ title = 'Malnutrition trends' }) {
   const user = useAuthStore(s => s.user)
 
   const { data, isLoading } = useQuery({
@@ -21,25 +21,19 @@ export default function AlertTrendsChart() {
     staleTime: 5 * 60 * 1000,
   })
 
-  const chartData =
-    data?.length > 0
-      ? data
-      : [
-          { name: 'Jan', sam: 12, mam: 19, stunted: 3 },
-          { name: 'Feb', sam: 10, mam: 22, stunted: 4 },
-          { name: 'Mar', sam: 15, mam: 18, stunted: 3 },
-          { name: 'Apr', sam: 8, mam: 15, stunted: 5 },
-          { name: 'May', sam: 5, mam: 12, stunted: 2 },
-          { name: 'Jun', sam: 7, mam: 10, stunted: 1 },
-        ]
+  const chartData = Array.isArray(data) && data.length > 0 ? data : []
 
   return (
     <div className="card p-6 h-[350px] flex flex-col">
-      <h3 className="font-display font-semibold text-ink-display tracking-wide mb-4">Malnutrition trends</h3>
+      <h3 className="font-display font-semibold text-ink-display tracking-wide mb-4">{title}</h3>
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center text-ink-muted text-sm">
           <div className="h-6 w-6 border-2 border-border-subtle border-t-forest rounded-full animate-spin mr-2" />
           Loading trends…
+        </div>
+      ) : chartData.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 text-ink-muted text-sm leading-relaxed">
+          No alert trend data for this period yet. Trends appear once alerts are logged over time.
         </div>
       ) : (
         <div className="flex-1 min-h-0 w-full">

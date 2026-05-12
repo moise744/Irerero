@@ -22,7 +22,7 @@ const LABELS = {
   unmeasured: 'Unmeasured',
 }
 
-export default function StatusDistributionChart({ data }) {
+export default function StatusDistributionChart({ data, title = 'Nutritional status distribution' }) {
   if (!data) return null
   const chartData = Object.entries(data)
     .map(([status, count]) => ({ status: LABELS[status] || status, count, key: status }))
@@ -30,7 +30,7 @@ export default function StatusDistributionChart({ data }) {
 
   return (
     <div className="card p-6">
-      <h3 className="font-display font-semibold text-ink-display tracking-wide mb-4">Nutritional status distribution</h3>
+      <h3 className="font-display font-semibold text-ink-display tracking-wide mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="#E8E4DC" vertical={false} />

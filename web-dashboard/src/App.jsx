@@ -20,6 +20,7 @@ import SmsCampaignPage from './pages/SmsCampaignPage'
 import AdminToolsPage from './pages/AdminToolsPage'
 import ReportBuilderPage from './pages/ReportBuilderPage'
 import ReferralsPage from './pages/ReferralsPage'
+import RequireRole from './components/auth/RequireRole'
 
 /** P7: Wait for /auth/me when a token exists — handles 401 gracefully. */
 function useAuthBootstrap() {
@@ -129,19 +130,110 @@ export default function App() {
 
       <Route element={<RequireAuth />}>
         <Route element={<ProtectedShell />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="children" element={<ChildrenPage />} />
-          <Route path="alerts" element={<AlertsPage />} />
-          <Route path="sms-inbox" element={<SmsInboxPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-          <Route path="users" element={<UsersPage />} />
-          <Route path="staff" element={<StaffManagementPage />} />
-          <Route path="referrals" element={<ReferralsPage />} />
-          <Route path="sync-conflicts" element={<SyncConflictsPage />} />
-          <Route path="food-stock" element={<FoodStockPage />} />
-          <Route path="sms-campaign" element={<SmsCampaignPage />} />
-          <Route path="admin-tools" element={<AdminToolsPage />} />
-          <Route path="report-builder" element={<ReportBuilderPage />} />
+          <Route
+            index
+            element={
+              <RequireRole pathSegment="">
+                <DashboardPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="children"
+            element={
+              <RequireRole pathSegment="children">
+                <ChildrenPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="alerts"
+            element={
+              <RequireRole pathSegment="alerts">
+                <AlertsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="sms-inbox"
+            element={
+              <RequireRole pathSegment="sms-inbox">
+                <SmsInboxPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="reports"
+            element={
+              <RequireRole pathSegment="reports">
+                <ReportsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="users"
+            element={
+              <RequireRole pathSegment="users">
+                <UsersPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="staff"
+            element={
+              <RequireRole pathSegment="staff">
+                <StaffManagementPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="referrals"
+            element={
+              <RequireRole pathSegment="referrals">
+                <ReferralsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="sync-conflicts"
+            element={
+              <RequireRole pathSegment="sync-conflicts">
+                <SyncConflictsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="food-stock"
+            element={
+              <RequireRole pathSegment="food-stock">
+                <FoodStockPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="sms-campaign"
+            element={
+              <RequireRole pathSegment="sms-campaign">
+                <SmsCampaignPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="admin-tools"
+            element={
+              <RequireRole pathSegment="admin-tools">
+                <AdminToolsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="report-builder"
+            element={
+              <RequireRole pathSegment="report-builder">
+                <ReportBuilderPage />
+              </RequireRole>
+            }
+          />
         </Route>
       </Route>
 
